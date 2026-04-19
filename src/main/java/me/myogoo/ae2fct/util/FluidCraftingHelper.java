@@ -13,6 +13,7 @@ import appeng.menu.me.common.IClientRepo;
 import appeng.util.prioritylist.IPartitionList;
 import me.myogoo.ae2fct.codec.VirtualFluid;
 import me.myogoo.ae2fct.init.AE2FCTDataComponent;
+import me.myogoo.ae2fct.init.AE2FCTItems;
 import me.myogoo.ae2fct.item.VirtualFluidItem;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.item.BucketItem;
@@ -26,6 +27,23 @@ import net.neoforged.neoforge.fluids.FluidUtil;
 import java.util.*;
 
 public class FluidCraftingHelper {
+    private static final ThreadLocal<Boolean> FLUID_CRAFTING_ENABLED = ThreadLocal.withInitial(() -> false);
+
+    public static boolean isFluidCraftingEnabled() {
+        return FLUID_CRAFTING_ENABLED.get();
+    }
+
+    public static void setFluidCraftingEnabled(boolean enabled) {
+        FLUID_CRAFTING_ENABLED.set(enabled);
+    }
+
+    public static void clearFluidCraftingEnabled() {
+        FLUID_CRAFTING_ENABLED.remove();
+    }
+
+    public static boolean isVirtualFluidItem(ItemStack stack) {
+        return !stack.isEmpty() && stack.is(AE2FCTItems.VIRTUAL_FLUID_ITEM.get());
+    }
 
     /**
      * Extracts unique fluids from the items accepted by an ingredient.
@@ -59,7 +77,7 @@ public class FluidCraftingHelper {
 
         for (Fluid fluid : fluids) {
             AEFluidKey fluidKey = AEFluidKey.of(fluid);
-            if (fluidKey != null && storage.get(fluidKey) > 0) {
+            if (fluidKey != null && storage.get(fluidKey) >= 1000) {
                 AEItemKey vKey = AEItemKey.of(VirtualFluidItem.createItemStack(fluid));
                 if (vKey != null && (filter == null || filter.isListed(vKey))) {
                     enhancedResults.add(vKey);

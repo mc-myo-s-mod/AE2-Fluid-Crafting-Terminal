@@ -123,3 +123,6 @@ _*
 
 bin/*
 AGENTS.md
+
+# Avoid ignoring guide lang file
+!**/ae2guide/_*

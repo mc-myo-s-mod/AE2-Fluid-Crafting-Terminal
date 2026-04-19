@@ -4,7 +4,6 @@ import appeng.api.networking.crafting.ICraftingService;
 import appeng.api.stacks.AEItemKey;
 import appeng.api.stacks.KeyCounter;
 import appeng.util.prioritylist.IPartitionList;
-import me.myogoo.ae2fct.util.ExtendedTerminalCompatHelper;
 import me.myogoo.ae2fct.util.FluidCraftingHelper;
 import net.minecraft.world.item.crafting.Ingredient;
 import org.spongepowered.asm.mixin.Mixin;
@@ -26,7 +25,7 @@ public abstract class ETFillRecipeBasePacketMixin {
     @Inject(method = "findBestMatchingItemStack", at = @At("RETURN"), cancellable = true)
     private void ae2fct$optimizedFindBestMatchingItemStack(Ingredient ingredient, IPartitionList filter, KeyCounter storage,
             CallbackInfoReturnable<List<AEItemKey>> cir) {
-        if (!ExtendedTerminalCompatHelper.FLUID_CRAFTING_ENABLED.get()) {
+        if (!FluidCraftingHelper.isFluidCraftingEnabled()) {
             return;
         }
 
@@ -49,7 +48,7 @@ public abstract class ETFillRecipeBasePacketMixin {
     @Inject(method = "findCraftableKey", at = @At("RETURN"), cancellable = true)
     private void ae2fct$checkFluidCraftableKey(Ingredient ingredient, ICraftingService craftingService,
             CallbackInfoReturnable<Optional<AEItemKey>> cir) {
-        if (!ExtendedTerminalCompatHelper.FLUID_CRAFTING_ENABLED.get() || cir.getReturnValue().isPresent()) {
+        if (!FluidCraftingHelper.isFluidCraftingEnabled() || cir.getReturnValue().isPresent()) {
             return;
         }
 

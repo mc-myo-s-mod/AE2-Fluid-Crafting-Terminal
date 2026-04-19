@@ -14,20 +14,14 @@ import me.myogoo.myotus.menu.TerminalUpgradeHelper;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.crafting.Ingredient;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import java.util.*;
 
 @Mixin(value = FillCraftingGridFromRecipePacket.class, remap = false)
 public class FillCraftingGridFromRecipePacketMixin {
-
-    @Unique
-    private static final ThreadLocal<Boolean> ae2fct$fluidCraftingEnabled = ThreadLocal.withInitial(() -> false);
-
     @WrapMethod(method = "handleOnServer")
     private void ae2fct$withFluidCraftingState(ServerPlayer player, Operation<Void> original) {
         boolean enabled = false;
@@ -35,18 +29,18 @@ public class FillCraftingGridFromRecipePacketMixin {
             enabled = TerminalUpgradeHelper.hasUpgrade(menu, AE2FCTItems.TERMINAL_FLUID_INTERACT_CARD.get());
         }
 
-        ae2fct$fluidCraftingEnabled.set(enabled);
+        FluidCraftingHelper.setFluidCraftingEnabled(enabled);
         try {
             original.call(player);
         } finally {
-            ae2fct$fluidCraftingEnabled.remove();
+            FluidCraftingHelper.clearFluidCraftingEnabled();
         }
     }
 
     @Inject(method = "findBestMatchingItemStack", at = @At("RETURN"), cancellable = true)
     private void optimizedFindBestMatchingItemStack(Ingredient ingredient, IPartitionList filter, KeyCounter storage,
             CallbackInfoReturnable<List<AEItemKey>> cir) {
-        if (!ae2fct$fluidCraftingEnabled.get()) {
+        if (!FluidCraftingHelper.isFluidCraftingEnabled()) {
             return;
         }
 
@@ -71,7 +65,7 @@ public class FillCraftingGridFromRecipePacketMixin {
     @Inject(method = "findCraftableKey", at = @At("RETURN"), cancellable = true)
     private void checkFluidCraftableKey(Ingredient ingredient, ICraftingService craftingService,
             CallbackInfoReturnable<Optional<AEItemKey>> cir) {
-        if (!ae2fct$fluidCraftingEnabled.get()) {
+        if (!FluidCraftingHelper.isFluidCraftingEnabled()) {
             return;
         }
 

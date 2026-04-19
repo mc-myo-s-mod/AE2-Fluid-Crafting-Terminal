@@ -58,7 +58,7 @@ jobs:
           loaders: ${{ steps.vars.outputs.mod_loader }}
           version-type: ${{ steps.vars.outputs.version_type }}
 
-          files: 'build/libs/*.jar'
+          files: 'build/libs/!(*-@(all|dev|sources|javadoc)).jar'
           name: AE2-Fluid-Crafting-Terminal-${{ steps.vars.outputs.mc_version }}-${{ steps.vars.outputs.mod_version }}
           version: ${{ steps.vars.outputs.mc_version }}-${{ steps.vars.outputs.mod_version }}
 

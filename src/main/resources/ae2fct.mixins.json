@@ -4,15 +4,16 @@
   "package": "me.myogoo.ae2fct.mixin",
   "compatibilityLevel": "JAVA_21",
   "mixins": [
+    "CraftConfirmMenuMixin",
+    "CraftingTermMenuMixin",
+    "FillCraftingGridFromRecipePacketMixin",
+    "IngredientMixin",
     "MEStorageMenuMixin",
     "NetworkStorageMixin",
-    "IngredientMixin",
-    "FillCraftingGridFromRecipePacketMixin",
     "et.ETFillRecipeBasePacketMixin",
     "et.ETFillTableCraftingGridFromRecipePacketMixin",
-    "CraftingTermMenuMixin",
     "et.ETTerminalBaseMenuMixin",
-    "CraftConfirmMenuMixin"
+    "minecraft.AbstractContainerMenuMixin"
   ],
   "client": [],
   "injectors": {

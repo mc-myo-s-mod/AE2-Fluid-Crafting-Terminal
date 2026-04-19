@@ -124,7 +124,7 @@ dependencies {
     implementation "de.mari_023:ae2wtlib_api:${AE2WTLib_version}"
     implementation "me.myogoo:myotus:${Myotus_version}"
 
-    compileOnly "maven.modrinth:extended-terminal:1.21.1-1.1.2"
+    compileOnly "maven.modrinth:extended-terminal:1.21.1-${ET_version}"
     compileOnly "org.appliedenergistics:guideme:${guideme_version}:api"
     runtimeOnly "org.appliedenergistics:guideme:${guideme_version}"
 
@@ -133,6 +133,9 @@ dependencies {
 
     runtimeOnly "maven.modrinth:immersiveengineering:12.4.2-194"
 
+    if(project.enable_et == "true") {
+        runtimeOnly "maven.modrinth:extended-terminal:1.21.1-${ET_version}"
+    }
     runtimeOnly "maven.modrinth:extended-crafting:7.0.7"
     runtimeOnly "maven.modrinth:cucumber:8.0.13"
 }

@@ -2,13 +2,16 @@ package me.myogoo.ae2fct.mixin.et;
 
 import appeng.menu.me.common.IClientRepo;
 import appeng.menu.me.common.MEStorageMenu;
+import appeng.menu.me.items.CraftingTermMenu;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
-import me.myogoo.ae2fct.util.ExtendedTerminalCompatHelper;
+import me.myogoo.ae2fct.init.AE2FCTItems;
 import me.myogoo.ae2fct.util.FluidCraftingHelper;
+import me.myogoo.myotus.menu.TerminalUpgradeHelper;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Ingredient;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Pseudo;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
@@ -25,10 +28,15 @@ public abstract class ETTerminalBaseMenuMixin extends MEStorageMenu {
         super(null, 0, null, null, false);
     }
 
+    @Unique
+    private boolean ae2fct$hasFluidInteractUpgrade() {
+        return TerminalUpgradeHelper.hasUpgrade(this, AE2FCTItems.TERMINAL_FLUID_INTERACT_CARD.get());
+    }
+
     @Inject(method = "findMissingIngredients", at = @At("RETURN"), cancellable = true)
     private void ae2fct$checkFluidForMissingIngredients(Map<Integer, Ingredient> ingredients,
-            CallbackInfoReturnable<appeng.menu.me.items.CraftingTermMenu.MissingIngredientSlots> cir) {
-        if (!ExtendedTerminalCompatHelper.hasFluidInteractUpgrade(this)) {
+            CallbackInfoReturnable<CraftingTermMenu.MissingIngredientSlots> cir) {
+        if (!ae2fct$hasFluidInteractUpgrade()) {
             return;
         }
 
@@ -69,14 +77,14 @@ public abstract class ETTerminalBaseMenuMixin extends MEStorageMenu {
         }
 
         if (changed) {
-            cir.setReturnValue(new appeng.menu.me.items.CraftingTermMenu.MissingIngredientSlots(newMissing, newCraftable));
+            cir.setReturnValue(new CraftingTermMenu.MissingIngredientSlots(newMissing, newCraftable));
         }
     }
 
     @Inject(method = "hasIngredient", at = @At("RETURN"), cancellable = true)
     private void ae2fct$hasFluidIngredient(Ingredient ingredient, Object2IntOpenHashMap<Object> usedIngredients,
             CallbackInfoReturnable<Boolean> cir) {
-        if (cir.getReturnValue() || !ExtendedTerminalCompatHelper.hasFluidInteractUpgrade(this)) {
+        if (cir.getReturnValue() || !ae2fct$hasFluidInteractUpgrade()) {
             return;
         }
 
@@ -88,7 +96,7 @@ public abstract class ETTerminalBaseMenuMixin extends MEStorageMenu {
 
     @Inject(method = "isCraftable", at = @At("RETURN"), cancellable = true)
     private void ae2fct$checkFluidCraftable(ItemStack itemStack, CallbackInfoReturnable<Boolean> cir) {
-        if (cir.getReturnValue() || !ExtendedTerminalCompatHelper.hasFluidInteractUpgrade(this)) {
+        if (cir.getReturnValue() || !ae2fct$hasFluidInteractUpgrade()) {
             return;
         }
 

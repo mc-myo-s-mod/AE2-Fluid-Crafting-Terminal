@@ -21,12 +21,5 @@ public class Ae2fct {
         AE2FCTConfig.initialize(modContainer);
         AE2FCTDataComponent.REGISTER.register(modEventBus);
         AE2FCTItems.REGISTER.register(modEventBus);
-        modEventBus.addListener(this::buildCreativeTabContents);
-    }
-
-    private void buildCreativeTabContents(BuildCreativeModeTabContentsEvent event) {
-        if (event.getTabKey() == CreativeModeTabs.INGREDIENTS) {
-            event.accept(AE2FCTItems.TERMINAL_FLUID_INTERACT_CARD.get());
-        }
     }
 }

@@ -1,6 +1,7 @@
 # Changelog
 
 ## Features
-- Now need **Terminal Fluid Interact Card** for interact fluids without bucket.
-- Add guideme
-- Integration with Extended Terminal
+- Add translate `zh_cn`, thanks to [@ChuijkYahus](https://github.com/ChuijkYahus)
+
+## Bug Fixes
+- fix `removed` method override conflict issue
