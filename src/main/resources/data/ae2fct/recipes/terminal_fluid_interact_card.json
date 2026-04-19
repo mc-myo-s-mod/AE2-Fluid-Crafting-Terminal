@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "ae2:advanced_card"
+    },
+    {
+      "item": "minecraft:bucket"
+    },
+    {
+      "item": "ae2:interface"
+    }
+  ],
+  "result": {
+    "item": "ae2fct:terminal_fluid_interact_card",
+    "count": 1
+  }
+}
