@@ -12,9 +12,9 @@ import appeng.menu.AEBaseMenu;
 import appeng.menu.me.common.MEStorageMenu;
 import me.myogoo.ae2fct.api.IMEStorageMenu;
 import me.myogoo.ae2fct.codec.VirtualFluid;
+import me.myogoo.ae2fct.integration.FluidCraftingTerminalIntegration;
 import me.myogoo.ae2fct.init.AE2FCTDataComponent;
 import me.myogoo.ae2fct.init.AE2FCTItems;
-import me.myogoo.myotus.menu.TerminalUpgradeHelper;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
@@ -84,7 +84,7 @@ public abstract class MEStorageMenuMixin extends AEBaseMenu implements IMEStorag
         }
 
         MEStorageMenu menu = (MEStorageMenu) (Object) this;
-        if (!TerminalUpgradeHelper.hasUpgrade(menu, AE2FCTItems.TERMINAL_FLUID_INTERACT_CARD.get())) {
+        if (!FluidCraftingTerminalIntegration.hasFluidInteractUpgrade(menu)) {
             return;
         }
 

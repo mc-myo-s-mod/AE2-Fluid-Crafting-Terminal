@@ -4,9 +4,8 @@ import appeng.menu.me.common.IClientRepo;
 import appeng.menu.me.common.MEStorageMenu;
 import appeng.menu.me.items.CraftingTermMenu;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
-import me.myogoo.ae2fct.init.AE2FCTItems;
+import me.myogoo.ae2fct.integration.FluidCraftingTerminalIntegration;
 import me.myogoo.ae2fct.util.FluidCraftingHelper;
-import me.myogoo.myotus.menu.TerminalUpgradeHelper;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Ingredient;
 import org.spongepowered.asm.mixin.Mixin;
@@ -30,7 +29,7 @@ public abstract class ETTerminalBaseMenuMixin extends MEStorageMenu {
 
     @Unique
     private boolean ae2fct$hasFluidInteractUpgrade() {
-        return TerminalUpgradeHelper.hasUpgrade(this, AE2FCTItems.TERMINAL_FLUID_INTERACT_CARD.get());
+        return FluidCraftingTerminalIntegration.hasFluidInteractUpgrade(this);
     }
 
     @Inject(method = "findMissingIngredients", at = @At("RETURN"), cancellable = true)

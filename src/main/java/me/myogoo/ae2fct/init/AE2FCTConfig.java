@@ -6,6 +6,7 @@ import net.neoforged.fml.config.ModConfig;
 
 public class AE2FCTConfig {
     public static void initialize(ModContainer container) {
+        container.registerConfig(ModConfig.Type.COMMON, FluidCraftingConfig.COMMON_SPEC, "ae2fct-common.toml");
         container.registerConfig(ModConfig.Type.CLIENT, FluidCraftingConfig.ClientSpec, "ae2fct-client.toml");
     }
 }
