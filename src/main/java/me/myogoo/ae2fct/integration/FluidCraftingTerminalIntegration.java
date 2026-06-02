@@ -8,9 +8,10 @@ import appeng.menu.me.common.IClientRepo;
 import appeng.menu.me.common.MEStorageMenu;
 import appeng.menu.me.items.CraftingTermMenu;
 import appeng.util.prioritylist.IPartitionList;
+import me.myogoo.ae2fct.config.FluidCraftingConfig;
 import me.myogoo.ae2fct.init.AE2FCTItems;
 import me.myogoo.ae2fct.util.FluidCraftingHelper;
-import me.myogoo.myotus.menu.TerminalUpgradeHelper;
+import me.myogoo.myotus.api.MyotusAPI.Terminal.TerminalUpgradeHelper;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Ingredient;
@@ -31,7 +32,8 @@ public final class FluidCraftingTerminalIntegration {
     }
 
     public static boolean hasFluidInteractUpgrade(MEStorageMenu menu) {
-        return TerminalUpgradeHelper.hasUpgrade(menu, AE2FCTItems.TERMINAL_FLUID_INTERACT_CARD.get());
+        return FluidCraftingConfig.allowFluidInteractionWithoutUpgrade()
+                || TerminalUpgradeHelper.hasUpgrade(menu, AE2FCTItems.TERMINAL_FLUID_INTERACT_CARD.get());
     }
 
     public static void beginFillGridContext(ServerPlayer player, Predicate<MEStorageMenu> menuPredicate) {

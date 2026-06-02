@@ -9,6 +9,8 @@ public final class AE2FCTConfig {
     }
 
     public static void initialize() {
+        ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, FluidCraftingConfig.COMMON_SPEC,
+                "ae2fct-common.toml");
         ModLoadingContext.get().registerConfig(ModConfig.Type.CLIENT, FluidCraftingConfig.CLIENT_SPEC,
                 "ae2fct-client.toml");
     }
