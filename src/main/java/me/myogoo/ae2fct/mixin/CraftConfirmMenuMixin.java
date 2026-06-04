@@ -8,11 +8,12 @@ import appeng.core.AELog;
 import appeng.helpers.IMenuCraftingPacket;
 import appeng.menu.MenuOpener;
 import appeng.menu.locator.MenuLocator;
+import appeng.menu.me.common.MEStorageMenu;
 import appeng.menu.me.crafting.CraftConfirmMenu;
 import me.myogoo.ae2fct.codec.VirtualFluid;
+import me.myogoo.ae2fct.integration.FluidCraftingTerminalIntegration;
 import me.myogoo.ae2fct.init.AE2FCTItems;
 import me.myogoo.ae2fct.util.VirtualFluidStorage;
-import me.myogoo.myotus.menu.TerminalUpgradeHelper;
 import net.minecraft.server.level.ServerPlayer;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
@@ -43,8 +44,8 @@ public abstract class CraftConfirmMenuMixin {
             return;
         }
 
-        if (player.containerMenu instanceof appeng.menu.me.common.MEStorageMenu menu
-                && !TerminalUpgradeHelper.hasUpgrade(menu, AE2FCTItems.TERMINAL_FLUID_INTERACT_CARD.get())) {
+        if (player.containerMenu instanceof MEStorageMenu menu
+                && !FluidCraftingTerminalIntegration.hasFluidInteractUpgrade(menu)) {
             ci.cancel();
             return;
         }
