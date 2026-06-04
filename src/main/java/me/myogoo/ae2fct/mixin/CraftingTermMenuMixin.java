@@ -3,10 +3,9 @@ package me.myogoo.ae2fct.mixin;
 import appeng.menu.me.common.IClientRepo;
 import appeng.menu.me.common.MEStorageMenu;
 import appeng.menu.me.items.CraftingTermMenu;
-import me.myogoo.ae2fct.init.AE2FCTItems;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
+import me.myogoo.ae2fct.integration.FluidCraftingTerminalIntegration;
 import me.myogoo.ae2fct.util.FluidCraftingHelper;
-import me.myogoo.myotus.menu.TerminalUpgradeHelper;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Ingredient;
 import org.spongepowered.asm.mixin.Mixin;
@@ -34,7 +33,7 @@ public abstract class CraftingTermMenuMixin extends MEStorageMenu {
     @Inject(method = "findMissingIngredients", at = @At("RETURN"), cancellable = true)
     private void checkFluidForMissingIngredients(Map<Integer, Ingredient> ingredients,
             CallbackInfoReturnable<CraftingTermMenu.MissingIngredientSlots> cir) {
-        if (!TerminalUpgradeHelper.hasUpgrade(this, AE2FCTItems.TERMINAL_FLUID_INTERACT_CARD.get())) {
+        if (!FluidCraftingTerminalIntegration.hasFluidInteractUpgrade(this)) {
             return;
         }
 
@@ -90,7 +89,7 @@ public abstract class CraftingTermMenuMixin extends MEStorageMenu {
             return;
         }
 
-        if (!TerminalUpgradeHelper.hasUpgrade(this, AE2FCTItems.TERMINAL_FLUID_INTERACT_CARD.get())) {
+        if (!FluidCraftingTerminalIntegration.hasFluidInteractUpgrade(this)) {
             return;
         }
 
@@ -106,7 +105,7 @@ public abstract class CraftingTermMenuMixin extends MEStorageMenu {
      */
     @Inject(method = "isCraftable", at = @At("RETURN"), cancellable = true)
     private void checkFluidCraftable(ItemStack itemStack, CallbackInfoReturnable<Boolean> cir) {
-        if (!TerminalUpgradeHelper.hasUpgrade(this, AE2FCTItems.TERMINAL_FLUID_INTERACT_CARD.get())) {
+        if (!FluidCraftingTerminalIntegration.hasFluidInteractUpgrade(this)) {
             return;
         }
 

@@ -8,9 +8,8 @@ import appeng.menu.me.common.MEStorageMenu;
 import appeng.util.prioritylist.IPartitionList;
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
-import me.myogoo.ae2fct.init.AE2FCTItems;
+import me.myogoo.ae2fct.integration.FluidCraftingTerminalIntegration;
 import me.myogoo.ae2fct.util.FluidCraftingHelper;
-import me.myogoo.myotus.menu.TerminalUpgradeHelper;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.crafting.Ingredient;
 import org.spongepowered.asm.mixin.Mixin;
@@ -26,7 +25,7 @@ public class FillCraftingGridFromRecipePacketMixin {
     private void ae2fct$withFluidCraftingState(ServerPlayer player, Operation<Void> original) {
         boolean enabled = false;
         if (player.containerMenu instanceof MEStorageMenu menu) {
-            enabled = TerminalUpgradeHelper.hasUpgrade(menu, AE2FCTItems.TERMINAL_FLUID_INTERACT_CARD.get());
+            enabled = FluidCraftingTerminalIntegration.hasFluidInteractUpgrade(menu);
         }
 
         FluidCraftingHelper.setFluidCraftingEnabled(enabled);
