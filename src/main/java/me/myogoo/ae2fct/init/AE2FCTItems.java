@@ -21,7 +21,7 @@ public class AE2FCTItems {
 
     private static <T extends Item> Supplier<T> registerItem(String name, Supplier<T> supplier) {
         var item = REGISTER.register(name, supplier);
-        MyotusAPI.REGISTER.creativeTabRegistrar().creativeTabItem(item);
+        MyotusAPI.creativeTabRegistrar().creativeTabItem(item);
         return item;
     }
 }

@@ -1,7 +1,8 @@
 # Changelog
 
 ## Features
-- Add translate `zh_cn`, thanks to [@ChuijkYahus](https://github.com/ChuijkYahus)
+- Added common QoL config.
+    - `allowFluidInteractionWithoutUpgrade`: removes upgrade card requirements.
 
-## Bug Fixes
-- fix `removed` method override conflict issue
+## Versions
+- Updated Myotus to `19.0.9`.
