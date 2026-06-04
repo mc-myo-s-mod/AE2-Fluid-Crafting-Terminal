@@ -11,7 +11,7 @@ import appeng.util.prioritylist.IPartitionList;
 import me.myogoo.ae2fct.config.FluidCraftingConfig;
 import me.myogoo.ae2fct.init.AE2FCTItems;
 import me.myogoo.ae2fct.util.FluidCraftingHelper;
-import me.myogoo.myotus.api.MyotusAPI.Terminal.TerminalUpgradeHelper;
+import me.myogoo.myotus.menu.TerminalUpgradeHelper;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Ingredient;
