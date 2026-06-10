@@ -16,6 +16,11 @@ repositories {
         name = "Jared's maven"
         url = "https://maven.blamejared.com/"
     }
+    //emi
+    maven {
+        name = "TerraformersMC"
+        url = "https://maven.terraformersmc.com/"
+    }
     //ae2wtlib
     maven {
         url = "https://modmaven.dev"
@@ -126,10 +131,13 @@ dependencies {
 
     compileOnly "maven.modrinth:extended-terminal:1.21.1-${ET_version}"
     compileOnly "org.appliedenergistics:guideme:${guideme_version}:api"
+    compileOnly "mezz.jei:jei-${minecraft_version}-neoforge:${JEI_version}"
+    compileOnly "dev.emi:emi-neoforge:${EMI_version}"
     runtimeOnly "org.appliedenergistics:guideme:${guideme_version}"
 
     runtimeOnly "mezz.jei:jei-${minecraft_version}-neoforge:${JEI_version}"
     runtimeOnly "curse.maven:ae2-jei-integration-1074338:5748513"
+    runtimeOnly "dev.emi:emi-neoforge:${EMI_version}"
 
     runtimeOnly "maven.modrinth:immersiveengineering:12.4.2-194"
 

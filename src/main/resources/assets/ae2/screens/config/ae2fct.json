@@ -1,0 +1,28 @@
+{
+  "includes": [
+    "config.json"
+  ],
+  "text": {
+    "title": {
+      "position": {
+        "left": 8,
+        "top": 7
+      },
+      "text": {
+        "translate": "gui.ae2fct.config.title"
+      }
+    }
+  },
+  "widgets": {
+    "show_bucket_recipes": {
+      "left": 10,
+      "top": 24,
+      "width": 180
+    },
+    "show_fluid_recipes": {
+      "left": 10,
+      "top": 48,
+      "width": 180
+    }
+  }
+}

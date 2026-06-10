@@ -1,4 +1,7 @@
 {
   "item.ae2fct.terminal_fluid_interact_card": "터미널 액체 상호작용 카드",
-  "item.ae2fct.terminal_fluid_interact_card.desc": "터미널 업그레이드 슬롯에 장착됩니다."
+  "item.ae2fct.terminal_fluid_interact_card.desc": "터미널 업그레이드 슬롯에 장착됩니다.",
+  "gui.ae2fct.config.title": "AE2 액체 조합 터미널",
+  "gui.ae2fct.config.show_bucket_recipes": "가상 액체로 양동이 레시피 보기",
+  "gui.ae2fct.config.show_fluid_recipes": "가상 액체로 액체 레시피 보기"
 }

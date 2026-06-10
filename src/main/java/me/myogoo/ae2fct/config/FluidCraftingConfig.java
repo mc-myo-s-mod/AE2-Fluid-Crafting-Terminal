@@ -1,15 +1,23 @@
 package me.myogoo.ae2fct.config;
 
-
 import net.neoforged.neoforge.common.ModConfigSpec;
 
 public class FluidCraftingConfig {
     public static final Common COMMON = new Common();
     public static final ModConfigSpec COMMON_SPEC = COMMON.get();
-    public static final ModConfigSpec ClientSpec = new Client().get();
+    public static final Client CLIENT = new Client();
+    public static final ModConfigSpec CLIENT_SPEC = CLIENT.get();
 
     public static boolean allowFluidInteractionWithoutUpgrade() {
         return COMMON.allowFluidInteractionWithoutUpgrade.get();
+    }
+
+    public static boolean showBucketRecipesForVirtualFluids() {
+        return CLIENT.showBucketRecipesForVirtualFluids.get();
+    }
+
+    public static boolean showFluidRecipesForVirtualFluids() {
+        return CLIENT.showFluidRecipesForVirtualFluids.get();
     }
 
     public static class Common {
@@ -35,9 +43,20 @@ public class FluidCraftingConfig {
 
     public static class Client {
         private final ModConfigSpec spec;
+        public final ModConfigSpec.BooleanValue showBucketRecipesForVirtualFluids;
+        public final ModConfigSpec.BooleanValue showFluidRecipesForVirtualFluids;
 
         Client() {
             var builder = new ModConfigSpec.Builder();
+
+            builder.push("recipe_viewer");
+            this.showBucketRecipesForVirtualFluids = builder
+                    .comment("When looking up a virtual fluid item in JEI/EMI, include recipes and uses for the fluid's bucket item.")
+                    .define("showBucketRecipesForVirtualFluids", true);
+            this.showFluidRecipesForVirtualFluids = builder
+                    .comment("When looking up a virtual fluid item in JEI/EMI, include recipes and uses for the fluid ingredient itself.")
+                    .define("showFluidRecipesForVirtualFluids", true);
+            builder.pop();
 
             this.spec = builder.build();
         }
