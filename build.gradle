@@ -87,6 +87,14 @@ repositories {
         }
     }
     maven {
+        name = "Jared's maven"
+        url = "https://maven.blamejared.com/"
+    }
+    maven {
+        name = "TerraformersMC"
+        url = "https://maven.terraformersmc.com/"
+    }
+    maven {
         url = "https://api.modrinth.com/maven"
     }
     maven {
@@ -107,6 +115,14 @@ dependencies {
     implementation fg.deobf("me.myogoo:myotus:${Myotus_version}")
     implementation fg.deobf("appeng:appliedenergistics2-forge:${AE2_version}")
     runtimeOnly fg.deobf("org.appliedenergistics:guideme:${guideme_version}")
+
+    compileOnly fg.deobf("mezz.jei:jei-${minecraft_version}-common-api:${JEI_version}")
+    compileOnly fg.deobf("mezz.jei:jei-${minecraft_version}-forge-api:${JEI_version}")
+    compileOnly fg.deobf("mezz.jei:jei-${minecraft_version}-forge:${JEI_version}")
+    compileOnly fg.deobf("dev.emi:emi-forge:${EMI_version}")
+    runtimeOnly fg.deobf("mezz.jei:jei-${minecraft_version}-forge:${JEI_version}")
+    runtimeOnly fg.deobf("curse.maven:ae2-jei-integration-1074338:5748513")
+    runtimeOnly fg.deobf("dev.emi:emi-forge:${EMI_version}")
 
     if(project.enable_et == "true") {
         runtimeOnly fg.deobf("maven.modrinth:extended-terminal:1.20.1-${ET_version}")

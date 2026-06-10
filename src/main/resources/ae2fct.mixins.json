@@ -17,12 +17,15 @@
     "minecraft.AbstractContainerMenuMixin"
   ],
   "client": [
-    "GuiGraphicsMixin"
+    "GuiGraphicsMixin",
+    "emi.EmiScreenManagerMixin",
+    "jei.JeiFocusInputHandlerMixin"
   ],
   "injectors": {
     "defaultRequire": 1
   },
   "overwrites": {
     "requireAnnotations": true
-  }
+  },
+  "plugin": "me.myogoo.ae2fct.mixin.Plugin"
 }

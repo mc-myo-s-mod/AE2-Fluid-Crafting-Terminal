@@ -33,6 +33,6 @@ side = "BOTH"
 [[dependencies."${mod_id}"]]
 modId = "myotus"
 mandatory = true
-versionRange = "[15.0.7]"
+versionRange = "[15.1.0]"
 ordering = "AFTER"
 side = "BOTH"
