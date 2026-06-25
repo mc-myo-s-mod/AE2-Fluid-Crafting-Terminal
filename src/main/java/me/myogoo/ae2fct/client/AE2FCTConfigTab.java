@@ -5,13 +5,12 @@ import appeng.client.gui.WidgetContainer;
 import appeng.client.gui.widgets.AECheckbox;
 import me.myogoo.ae2fct.Ae2fct;
 import me.myogoo.ae2fct.config.FluidCraftingConfig;
-import me.myogoo.ae2fct.init.AE2FCTItems;
 import me.myogoo.myotus.api.MyotusAPI;
 import me.myogoo.myotus.api.config.MyoConfigTab;
 import me.myogoo.myotus.api.config.MyoConfigTabScreen;
+import me.myogoo.myotus.client.gui.MyoIcon;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.item.ItemStack;
 
 public final class AE2FCTConfigTab implements MyoConfigTabScreen {
     private AECheckbox showBucketRecipesCheckbox;
@@ -21,7 +20,7 @@ public final class AE2FCTConfigTab implements MyoConfigTabScreen {
         MyotusAPI.configTabs().registerTerminalConfigTab(new MyoConfigTab(
                 ResourceLocation.fromNamespaceAndPath(Ae2fct.MODID, "virtual_fluid_recipe_lookup"),
                 Component.translatable("gui.ae2fct.config.title"),
-                new ItemStack(AE2FCTItems.TERMINAL_FLUID_INTERACT_CARD.get()),
+                MyoIcon.AE2FCT_CONFIG,
                 "ae2fct.json",
                 new AE2FCTConfigTab()
         ));

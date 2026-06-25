@@ -16,6 +16,7 @@
     "minecraft.AbstractContainerMenuMixin"
   ],
   "client": [
+    "emi.EmiApiAccessor",
     "emi.EmiScreenManagerMixin",
     "jei.FocusInputHandlerMixin"
   ],

@@ -10,7 +10,7 @@ public final class FluidCraftingTerminalIntegration {
     }
 
     public static boolean hasFluidInteractUpgrade(MEStorageMenu menu) {
-        return FluidCraftingConfig.allowFluidInteractionWithoutUpgrade()
+        return FluidCraftingConfig.QoL()
                 || TerminalUpgradeHelper.hasUpgrade(menu, AE2FCTItems.TERMINAL_FLUID_INTERACT_CARD.get());
     }
 }

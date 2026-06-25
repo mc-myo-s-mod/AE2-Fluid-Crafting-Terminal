@@ -8,8 +8,8 @@ public class FluidCraftingConfig {
     public static final Client CLIENT = new Client();
     public static final ModConfigSpec CLIENT_SPEC = CLIENT.get();
 
-    public static boolean allowFluidInteractionWithoutUpgrade() {
-        return COMMON.allowFluidInteractionWithoutUpgrade.get();
+    public static boolean QoL() {
+        return COMMON.QoL.get();
     }
 
     public static boolean showBucketRecipesForVirtualFluids() {
@@ -22,15 +22,15 @@ public class FluidCraftingConfig {
 
     public static class Common {
         private final ModConfigSpec spec;
-        public final ModConfigSpec.BooleanValue allowFluidInteractionWithoutUpgrade;
+        public final ModConfigSpec.BooleanValue QoL;
 
         Common() {
             var builder = new ModConfigSpec.Builder();
 
             builder.push("upgrade");
-            this.allowFluidInteractionWithoutUpgrade = builder
-                    .comment("Allows fluid terminal interaction without installing the Terminal Fluid Interact Card.")
-                    .define("allowFluidInteractionWithoutUpgrade", false);
+            this.QoL = builder
+                    .comment("Enables QoL behavior without requiring the Terminal Fluid Interact Card. When false, fluid terminal interaction requires the upgrade card in the terminal upgrade slot.")
+                    .define("QoL", false);
             builder.pop();
 
             this.spec = builder.build();
