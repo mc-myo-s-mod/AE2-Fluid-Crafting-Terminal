@@ -56,6 +56,7 @@ jobs:
           changelog-file: 'CHANGELOG.md' 
           game-versions: ${{ steps.vars.outputs.mc_version }}
           loaders: ${{ steps.vars.outputs.mod_loader }}
+          environment: client | server
           version-type: ${{ steps.vars.outputs.version_type }}
 
           files: 'build/libs/!(*-@(all|dev|sources|javadoc)).jar'
