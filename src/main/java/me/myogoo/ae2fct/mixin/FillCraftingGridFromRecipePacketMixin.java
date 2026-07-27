@@ -28,7 +28,8 @@ public class FillCraftingGridFromRecipePacketMixin {
             enabled = FluidCraftingTerminalIntegration.hasFluidInteractUpgrade(menu);
         }
 
-        FluidCraftingHelper.setFluidCraftingEnabled(enabled);
+        FluidCraftingHelper.setFluidCraftingEnabled(enabled,
+                ((FillCraftingGridFromRecipePacket) (Object) this).recipeId());
         try {
             original.call(player);
         } finally {

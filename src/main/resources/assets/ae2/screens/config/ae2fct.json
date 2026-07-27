@@ -23,6 +23,11 @@
       "left": 10,
       "top": 48,
       "width": 180
+    },
+    "show_ae2_fluid_key_bucket_recipes": {
+      "left": 10,
+      "top": 72,
+      "width": 180
     }
   }
 }

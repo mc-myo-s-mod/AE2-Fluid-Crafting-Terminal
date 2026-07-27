@@ -10,6 +10,7 @@ import mezz.jei.api.runtime.IIngredientManager;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.material.Fluids;
+import net.neoforged.neoforge.fluids.FluidStack;
 
 import java.util.Optional;
 
@@ -36,6 +37,21 @@ public final class AE2FCTJeiPlugin implements IModPlugin {
         }
         IPlatformFluidHelper helper = fluidHelper;
         Object ingredient = helper.create(fluid.builtInRegistryHolder(), amount);
+        IIngredientType type = helper.getFluidIngredientType();
+        return ingredientManager.createTypedIngredient(type, ingredient).map(it -> (ITypedIngredient<?>) it);
+    }
+
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    public static Optional<ITypedIngredient<?>> createTypedFluidIngredient(IIngredientManager ingredientManager,
+            FluidStack fluidStack) {
+        if (fluidHelper == null || fluidStack.isEmpty()) {
+            return Optional.empty();
+        }
+        IPlatformFluidHelper helper = fluidHelper;
+        Object ingredient = helper.create(
+                fluidStack.getFluidHolder(),
+                fluidStack.getAmount(),
+                fluidStack.getComponentsPatch());
         IIngredientType type = helper.getFluidIngredientType();
         return ingredientManager.createTypedIngredient(type, ingredient).map(it -> (ITypedIngredient<?>) it);
     }

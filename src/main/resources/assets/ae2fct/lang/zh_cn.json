@@ -3,5 +3,6 @@
   "item.ae2fct.terminal_fluid_interact_card.desc": "可让终端不借助铁桶就与流体交互",
   "gui.ae2fct.config.title": "AE2 流体合成终端",
   "gui.ae2fct.config.show_bucket_recipes": "虚拟流体显示桶配方",
-  "gui.ae2fct.config.show_fluid_recipes": "虚拟流体显示流体配方"
+  "gui.ae2fct.config.show_fluid_recipes": "虚拟流体显示流体配方",
+  "gui.ae2fct.config.show_ae2_fluid_key_bucket_recipes": "显示 AE2 流体的桶配方"
 }

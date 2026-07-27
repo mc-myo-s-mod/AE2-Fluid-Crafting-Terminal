@@ -22,6 +22,9 @@ public final class Plugin implements IMixinConfigPlugin {
 
     @Override
     public boolean shouldApplyMixin(String targetClassName, String mixinClassName) {
+        if (mixinClassName.contains(".et.")) {
+            return isLoaded("extendedterminal");
+        }
         if (mixinClassName.contains(".emi.")) {
             return isLoaded("emi");
         }

@@ -15,6 +15,7 @@ import net.minecraft.resources.ResourceLocation;
 public final class AE2FCTConfigTab implements MyoConfigTabScreen {
     private AECheckbox showBucketRecipesCheckbox;
     private AECheckbox showFluidRecipesCheckbox;
+    private AECheckbox showAe2FluidKeyBucketRecipesCheckbox;
 
     public static void initialize() {
         MyotusAPI.configTabs().registerTerminalConfigTab(new MyoConfigTab(
@@ -32,6 +33,8 @@ public final class AE2FCTConfigTab implements MyoConfigTabScreen {
                 Component.translatable("gui.ae2fct.config.show_bucket_recipes"), this::save);
         showFluidRecipesCheckbox = widgets.addCheckbox("show_fluid_recipes",
                 Component.translatable("gui.ae2fct.config.show_fluid_recipes"), this::save);
+        showAe2FluidKeyBucketRecipesCheckbox = widgets.addCheckbox("show_ae2_fluid_key_bucket_recipes",
+                Component.translatable("gui.ae2fct.config.show_ae2_fluid_key_bucket_recipes"), this::save);
         updateState();
     }
 
@@ -42,6 +45,10 @@ public final class AE2FCTConfigTab implements MyoConfigTabScreen {
         if (showFluidRecipesCheckbox != null) {
             showFluidRecipesCheckbox.setSelected(FluidCraftingConfig.CLIENT.showFluidRecipesForVirtualFluids.get());
         }
+        if (showAe2FluidKeyBucketRecipesCheckbox != null) {
+            showAe2FluidKeyBucketRecipesCheckbox.setSelected(
+                    FluidCraftingConfig.CLIENT.showBucketRecipesForAe2FluidKeys.get());
+        }
     }
 
     private void save() {
@@ -50,6 +57,10 @@ public final class AE2FCTConfigTab implements MyoConfigTabScreen {
         }
         if (showFluidRecipesCheckbox != null) {
             FluidCraftingConfig.CLIENT.showFluidRecipesForVirtualFluids.set(showFluidRecipesCheckbox.isSelected());
+        }
+        if (showAe2FluidKeyBucketRecipesCheckbox != null) {
+            FluidCraftingConfig.CLIENT.showBucketRecipesForAe2FluidKeys.set(
+                    showAe2FluidKeyBucketRecipesCheckbox.isSelected());
         }
         FluidCraftingConfig.CLIENT.get().save();
         updateState();

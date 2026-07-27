@@ -1,6 +1,9 @@
 package me.myogoo.ae2fct.mixin.emi;
 
+import appeng.api.stacks.AEFluidKey;
+import appeng.client.gui.AEBaseScreen;
 import dev.emi.emi.api.EmiApi;
+import dev.emi.emi.api.neoforge.NeoForgeEmiStack;
 import dev.emi.emi.api.recipe.EmiRecipe;
 import dev.emi.emi.api.stack.EmiIngredient;
 import dev.emi.emi.api.stack.EmiStack;
@@ -12,8 +15,10 @@ import dev.emi.emi.screen.EmiScreenManager;
 import me.myogoo.ae2fct.config.FluidCraftingConfig;
 import me.myogoo.ae2fct.init.AE2FCTDataComponent;
 import me.myogoo.ae2fct.util.FluidCraftingHelper;
+import net.minecraft.client.Minecraft;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.material.Fluid;
+import net.neoforged.neoforge.fluids.FluidStack;
+import net.neoforged.neoforge.fluids.FluidUtil;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -29,22 +34,35 @@ import java.util.function.Function;
 @Mixin(EmiScreenManager.class)
 public abstract class EmiScreenManagerMixin {
     @Inject(method = "stackInteraction", at = @At("HEAD"), cancellable = true, remap = false)
-    private static void ae2fct$showVirtualFluidTargets(EmiStackInteraction interaction, Function<EmiBind, Boolean> function,
+    private static void ae2fct$showFluidTargets(EmiStackInteraction interaction, Function<EmiBind, Boolean> function,
             CallbackInfoReturnable<Boolean> cir) {
         EmiIngredient hovered = interaction.getStack();
         if (hovered.getEmiStacks().isEmpty()) {
             return;
         }
+
+        FluidStack fluidStack;
+        boolean virtualFluid;
         ItemStack stack = hovered.getEmiStacks().get(0).getItemStack();
-        if (!FluidCraftingHelper.isVirtualFluidItem(stack) || !stack.has(AE2FCTDataComponent.VIRTUAL_FLUID)) {
-            return;
-        }
-        var virtualFluid = stack.get(AE2FCTDataComponent.VIRTUAL_FLUID);
-        if (virtualFluid == null || virtualFluid.fluid().isEmpty()) {
-            return;
+        if (FluidCraftingHelper.isVirtualFluidItem(stack) && stack.has(AE2FCTDataComponent.VIRTUAL_FLUID)) {
+            var virtualFluidData = stack.get(AE2FCTDataComponent.VIRTUAL_FLUID);
+            if (virtualFluidData == null || virtualFluidData.fluid().isEmpty()) {
+                return;
+            }
+            fluidStack = virtualFluidData.fluid();
+            virtualFluid = true;
+        } else {
+            if (!FluidCraftingConfig.showBucketRecipesForAe2FluidKeys()) {
+                return;
+            }
+            fluidStack = ae2fct$getAeFluidStackUnderMouse(hovered);
+            if (fluidStack.isEmpty()) {
+                return;
+            }
+            virtualFluid = false;
         }
 
-        List<EmiIngredient> targets = ae2fct$createTargetIngredients(virtualFluid.fluid().getFluid(), virtualFluid.fluid().getAmount());
+        List<EmiIngredient> targets = ae2fct$createTargetIngredients(fluidStack, virtualFluid);
         if (targets.isEmpty()) {
             return;
         }
@@ -60,13 +78,41 @@ public abstract class EmiScreenManagerMixin {
     }
 
     @Unique
-    private static List<EmiIngredient> ae2fct$createTargetIngredients(Fluid fluid, long amount) {
-        List<EmiIngredient> targets = new ArrayList<>();
-        if (FluidCraftingConfig.showBucketRecipesForVirtualFluids()) {
-            targets.add(EmiStack.of(new ItemStack(fluid.getBucket())));
+    private static FluidStack ae2fct$getAeFluidStackUnderMouse(EmiIngredient hovered) {
+        if (Minecraft.getInstance().screen instanceof AEBaseScreen<?> aeScreen) {
+            var stackWithBounds = aeScreen.getStackUnderMouse(
+                    EmiScreenManager.lastMouseX,
+                    EmiScreenManager.lastMouseY);
+            if (stackWithBounds != null && stackWithBounds.stack().what() instanceof AEFluidKey fluidKey) {
+                FluidStack fluidStack = fluidKey.toStack((int) AEFluidKey.AMOUNT_BUCKET);
+                EmiStack expectedFluid = NeoForgeEmiStack.of(fluidStack);
+                boolean hoveredFluidMatches = hovered.getEmiStacks().stream()
+                        .anyMatch(expectedFluid::isEqual);
+                if (hoveredFluidMatches) {
+                    return fluidStack;
+                }
+            }
         }
-        if (FluidCraftingConfig.showFluidRecipesForVirtualFluids()) {
-            targets.add(EmiStack.of(fluid, amount));
+        return FluidStack.EMPTY;
+    }
+
+    @Unique
+    private static List<EmiIngredient> ae2fct$createTargetIngredients(FluidStack fluidStack, boolean virtualFluid) {
+        List<EmiIngredient> targets = new ArrayList<>();
+        boolean showBucketRecipes = virtualFluid
+                ? FluidCraftingConfig.showBucketRecipesForVirtualFluids()
+                : FluidCraftingConfig.showBucketRecipesForAe2FluidKeys();
+        boolean showFluidRecipes = !virtualFluid
+                || FluidCraftingConfig.showFluidRecipesForVirtualFluids();
+
+        if (showBucketRecipes) {
+            ItemStack bucket = FluidUtil.getFilledBucket(fluidStack);
+            if (!bucket.isEmpty()) {
+                targets.add(EmiStack.of(bucket));
+            }
+        }
+        if (showFluidRecipes) {
+            targets.add(NeoForgeEmiStack.of(fluidStack));
         }
         return targets;
     }

@@ -3,5 +3,6 @@
   "item.ae2fct.terminal_fluid_interact_card.desc": "Enables terminal fluid interaction without bucket",
   "gui.ae2fct.config.title": "AE2 Fluid Crafting Terminal",
   "gui.ae2fct.config.show_bucket_recipes": "Show bucket recipes for virtual fluids",
-  "gui.ae2fct.config.show_fluid_recipes": "Show fluid recipes for virtual fluids"
+  "gui.ae2fct.config.show_fluid_recipes": "Show fluid recipes for virtual fluids",
+  "gui.ae2fct.config.show_ae2_fluid_key_bucket_recipes": "Show bucket recipes for AE2 fluids"
 }
