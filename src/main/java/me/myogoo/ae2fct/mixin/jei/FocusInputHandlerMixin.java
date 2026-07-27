@@ -2,6 +2,7 @@ package me.myogoo.ae2fct.mixin.jei;
 
 import appeng.api.stacks.AEFluidKey;
 import appeng.client.gui.AEBaseScreen;
+import com.mojang.blaze3d.platform.InputConstants;
 import me.myogoo.ae2fct.config.FluidCraftingConfig;
 import me.myogoo.ae2fct.init.AE2FCTDataComponent;
 import me.myogoo.ae2fct.integration.jei.AE2FCTJeiPlugin;
@@ -75,12 +76,14 @@ public abstract class FocusInputHandlerMixin {
             return;
         }
 
-        if (!FluidCraftingConfig.showBucketRecipesForAe2FluidKeys()) {
-            return;
-        }
         if (rawScreen instanceof AEBaseScreen<?> aeScreen) {
             var stackWithBounds = aeScreen.getStackUnderMouse(input.getMouseX(), input.getMouseY());
             if (stackWithBounds != null && stackWithBounds.stack().what() instanceof AEFluidKey fluidKey) {
+                if (!ae2fct$isKeyboardInput(input)
+                        || !FluidCraftingConfig.showBucketRecipesForAe2FluidKeys()) {
+                    cir.setReturnValue(Optional.empty());
+                    return;
+                }
                 IMouseOverable mouseOverable = (mouseX, mouseY) -> stackWithBounds.bounds().contains((int) mouseX,
                         (int) mouseY);
                 ae2fct$openFluidTargets(
@@ -92,6 +95,12 @@ public abstract class FocusInputHandlerMixin {
                         cir);
             }
         }
+    }
+
+    @Unique
+    private static boolean ae2fct$isKeyboardInput(UserInput input) {
+        InputConstants.Type type = input.getKey().getType();
+        return type == InputConstants.Type.KEYSYM || type == InputConstants.Type.SCANCODE;
     }
 
     @Unique

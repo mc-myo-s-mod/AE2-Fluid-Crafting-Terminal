@@ -2,6 +2,7 @@ package me.myogoo.ae2fct.mixin.emi;
 
 import appeng.api.stacks.AEFluidKey;
 import appeng.client.gui.AEBaseScreen;
+import com.mojang.blaze3d.platform.InputConstants;
 import dev.emi.emi.api.EmiApi;
 import dev.emi.emi.api.neoforge.NeoForgeEmiStack;
 import dev.emi.emi.api.recipe.EmiRecipe;
@@ -43,6 +44,8 @@ public abstract class EmiScreenManagerMixin {
 
         FluidStack fluidStack;
         boolean virtualFluid;
+        boolean showRecipes;
+        boolean showUses;
         ItemStack stack = hovered.getEmiStacks().get(0).getItemStack();
         if (FluidCraftingHelper.isVirtualFluidItem(stack) && stack.has(AE2FCTDataComponent.VIRTUAL_FLUID)) {
             var virtualFluidData = stack.get(AE2FCTDataComponent.VIRTUAL_FLUID);
@@ -51,30 +54,53 @@ public abstract class EmiScreenManagerMixin {
             }
             fluidStack = virtualFluidData.fluid();
             virtualFluid = true;
+            showRecipes = function.apply(EmiConfig.viewRecipes);
+            showUses = function.apply(EmiConfig.viewUses);
         } else {
-            if (!FluidCraftingConfig.showBucketRecipesForAe2FluidKeys()) {
-                return;
-            }
             fluidStack = ae2fct$getAeFluidStackUnderMouse(hovered);
             if (fluidStack.isEmpty()) {
                 return;
             }
             virtualFluid = false;
+            showRecipes = ae2fct$matchesKeyboardBind(function, EmiConfig.viewRecipes);
+            showUses = ae2fct$matchesKeyboardBind(function, EmiConfig.viewUses);
+            if (!showRecipes && !showUses) {
+                if (function.apply(EmiConfig.viewRecipes) || function.apply(EmiConfig.viewUses)) {
+                    cir.setReturnValue(false);
+                }
+                return;
+            }
+            if (!FluidCraftingConfig.showBucketRecipesForAe2FluidKeys()) {
+                cir.setReturnValue(false);
+                return;
+            }
         }
 
         List<EmiIngredient> targets = ae2fct$createTargetIngredients(fluidStack, virtualFluid);
         if (targets.isEmpty()) {
             return;
         }
-        if (function.apply(EmiConfig.viewRecipes)) {
+        if (showRecipes) {
             ae2fct$displayRecipes(targets);
             cir.setReturnValue(true);
             return;
         }
-        if (function.apply(EmiConfig.viewUses)) {
+        if (showUses) {
             ae2fct$displayUses(targets);
             cir.setReturnValue(true);
         }
+    }
+
+    @Unique
+    private static boolean ae2fct$matchesKeyboardBind(Function<EmiBind, Boolean> function, EmiBind source) {
+        EmiBind.ModifiedKey[] keys = source.boundKeys.stream()
+                .filter(key -> !key.isUnbound())
+                .filter(key -> {
+                    InputConstants.Type type = key.key().getType();
+                    return type == InputConstants.Type.KEYSYM || type == InputConstants.Type.SCANCODE;
+                })
+                .toArray(EmiBind.ModifiedKey[]::new);
+        return keys.length > 0 && function.apply(new EmiBind(source.translationKey, keys));
     }
 
     @Unique
