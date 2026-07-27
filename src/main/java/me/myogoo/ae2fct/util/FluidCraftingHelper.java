@@ -12,10 +12,12 @@ import appeng.api.storage.StorageHelper;
 import appeng.menu.me.common.IClientRepo;
 import appeng.util.prioritylist.IPartitionList;
 import me.myogoo.ae2fct.codec.VirtualFluid;
+import me.myogoo.ae2fct.config.FluidCraftingConfig;
 import me.myogoo.ae2fct.init.AE2FCTDataComponent;
 import me.myogoo.ae2fct.init.AE2FCTItems;
 import me.myogoo.ae2fct.item.VirtualFluidItem;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.BucketItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Ingredient;
@@ -23,22 +25,38 @@ import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.material.Fluids;
 import net.neoforged.neoforge.fluids.FluidStack;
 import net.neoforged.neoforge.fluids.FluidUtil;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
 public class FluidCraftingHelper {
     private static final ThreadLocal<Boolean> FLUID_CRAFTING_ENABLED = ThreadLocal.withInitial(() -> false);
+    private static final ThreadLocal<ResourceLocation> FLUID_CRAFTING_RECIPE_ID = new ThreadLocal<>();
 
     public static boolean isFluidCraftingEnabled() {
-        return FLUID_CRAFTING_ENABLED.get();
+        return FLUID_CRAFTING_ENABLED.get() && !isCurrentRecipeBlacklisted();
     }
 
     public static void setFluidCraftingEnabled(boolean enabled) {
+        setFluidCraftingEnabled(enabled, null);
+    }
+
+    public static void setFluidCraftingEnabled(boolean enabled, @Nullable ResourceLocation recipeId) {
         FLUID_CRAFTING_ENABLED.set(enabled);
+        if (recipeId == null) {
+            FLUID_CRAFTING_RECIPE_ID.remove();
+        } else {
+            FLUID_CRAFTING_RECIPE_ID.set(recipeId);
+        }
+    }
+
+    public static boolean isCurrentRecipeBlacklisted() {
+        return FluidCraftingConfig.isVirtualFluidRecipeBlacklisted(FLUID_CRAFTING_RECIPE_ID.get());
     }
 
     public static void clearFluidCraftingEnabled() {
         FLUID_CRAFTING_ENABLED.remove();
+        FLUID_CRAFTING_RECIPE_ID.remove();
     }
 
     public static boolean isVirtualFluidItem(ItemStack stack) {

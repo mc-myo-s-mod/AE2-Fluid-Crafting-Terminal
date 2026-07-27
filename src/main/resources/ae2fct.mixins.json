@@ -15,11 +15,16 @@
     "et.ETTerminalBaseMenuMixin",
     "minecraft.AbstractContainerMenuMixin"
   ],
-  "client": [],
+  "client": [
+    "emi.EmiApiAccessor",
+    "emi.EmiScreenManagerMixin",
+    "jei.FocusInputHandlerMixin"
+  ],
   "injectors": {
     "defaultRequire": 1
   },
   "overwrites": {
     "requireAnnotations": true
-  }
+  },
+  "plugin": "me.myogoo.ae2fct.mixin.Plugin"
 }
