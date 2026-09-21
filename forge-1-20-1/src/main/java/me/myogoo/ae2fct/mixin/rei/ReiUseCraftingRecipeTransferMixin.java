@@ -1,0 +1,26 @@
+package me.myogoo.ae2fct.mixin.rei;
+
+import appeng.menu.me.items.CraftingTermMenu;
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
+import com.llamalad7.mixinextras.sugar.Local;
+import me.myogoo.ae2fct.integration.FluidCraftingTerminalIntegration;
+import net.minecraft.world.item.crafting.Ingredient;
+import net.minecraft.world.item.crafting.Recipe;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Pseudo;
+import org.spongepowered.asm.mixin.injection.At;
+
+import java.util.Map;
+
+@Pseudo
+@Mixin(targets = "appeng.integration.modules.rei.transfer.UseCraftingRecipeTransfer", remap = false)
+public abstract class ReiUseCraftingRecipeTransferMixin {
+    @WrapOperation(method = "transferRecipe", at = @At(value = "INVOKE", target = "Lappeng/menu/me/items/CraftingTermMenu;findMissingIngredients(Ljava/util/Map;)Lappeng/menu/me/items/CraftingTermMenu$MissingIngredientSlots;"))
+    private CraftingTermMenu.MissingIngredientSlots ae2fct$withRecipeContext(CraftingTermMenu menu,
+            Map<Integer, Ingredient> ingredients, Operation<CraftingTermMenu.MissingIngredientSlots> original,
+            @Local(argsOnly = true) Recipe<?> recipe) {
+        return FluidCraftingTerminalIntegration.withRecipeViewerContext(menu, recipe == null ? null : recipe.getId(),
+                () -> original.call(menu, ingredients));
+    }
+}

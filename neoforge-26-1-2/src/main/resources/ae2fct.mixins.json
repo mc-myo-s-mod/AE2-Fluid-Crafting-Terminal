@@ -1,0 +1,36 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "me.myogoo.ae2fct.mixin",
+  "compatibilityLevel": "JAVA_25",
+  "mixins": [
+    "AECraftingPatternMixin",
+    "CraftConfirmMenuMixin",
+    "CraftingTermMenuMixin",
+    "CraftingTermSlotMixin",
+    "FillCraftingGridFromRecipePacketMixin",
+    "IngredientMixin",
+    "MEStorageMenuMixin",
+    "NetworkStorageMixin",
+    "PatternEncodingTermMenuMixin",
+    "RecipeAccessMixin",
+    "fastsuite.CachedRecipeListMixin",
+    "minecraft.RecipeMapMixin",
+    "minecraft.RecipeManagerMixin",
+    "minecraft.ShapelessRecipeMixin",
+    "minecraft.AbstractContainerMenuMixin"
+  ],
+  "client": [
+    "jei.FocusInputHandlerMixin",
+    "jei.RecipeTransferPolicyMixin",
+    "EncodingHelperMixin",
+    "rei.ScreenOverlayImplMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  },
+  "overwrites": {
+    "requireAnnotations": true
+  },
+  "plugin": "me.myogoo.ae2fct.mixin.Plugin"
+}

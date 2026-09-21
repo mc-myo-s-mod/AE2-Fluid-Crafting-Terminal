@@ -1,34 +1,68 @@
-name: build mod
+name: Build AE2 Fluid Crafting Terminal
 
 on:
+  push:
+    branches: [master]
   pull_request:
-    branches:
-      - '*'
+    branches: [master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: build-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build:
+    name: Build ${{ matrix.minecraft }}
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - module: forge-1-20-1
+            minecraft: 1.20.1
+            java: "17\n21"
+            wrapper: ./gradlew
+            project: .
+            prefix: ":forge-1-20-1:"
+          - module: neoforge-1-21-1
+            minecraft: 1.21.1
+            java: "17\n21"
+            wrapper: ./gradlew
+            project: .
+            prefix: ":neoforge-1-21-1:"
+          - module: neoforge-26-1-2
+            minecraft: 26.1.2
+            java: "25"
+            wrapper: ./neoforge-26-1-2/gradlew
+            project: neoforge-26-1-2
+            prefix: ""
+
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Read java_version from gradle.properties
-        id: vars
-        run: |
-          java_version=$(grep '^java_version=' gradle.properties | cut -d'=' -f2 | tr -d ' \r')
-          echo "java_version=$java_version" >> $GITHUB_OUTPUT
-
-      - name: Setup Java
-        uses: actions/setup-java@v4
+      - uses: actions/checkout@v6
+      - uses: actions/setup-java@v5
         with:
-          distribution: 'microsoft'
-          java-version: ${{ steps.vars.outputs.java_version }}
-
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v4
-
-      - name: Make gradlew executable
-        run: chmod +x ./gradlew
-
-      - name: Build with Gradle
-        run: ./gradlew build
+          distribution: temurin
+          java-version: ${{ matrix.java }}
+      - uses: gradle/actions/setup-gradle@v6
+        with:
+          cache-provider: basic
+      - name: Build selected module
+        env:
+          WRAPPER: ${{ matrix.wrapper }}
+          PROJECT: ${{ matrix.project }}
+          PREFIX: ${{ matrix.prefix }}
+        run: |
+          chmod +x "$WRAPPER"
+          "$WRAPPER" --project-dir "$PROJECT" \
+            "${PREFIX}compileJava" "${PREFIX}runData" \
+            "${PREFIX}runGameTestServer" "${PREFIX}build" \
+            -Penable_et=false --build-cache --no-configuration-cache --no-daemon --console=plain
+      - uses: actions/upload-artifact@v7
+        with:
+          name: AE2FCT-${{ matrix.minecraft }}-build
+          path: ${{ matrix.module }}/build/libs/*.jar
+          if-no-files-found: error

@@ -1,0 +1,16 @@
+modLoader = "javafml"
+loaderVersion = "[47,)"
+license = "All Rights Reserved"
+
+[[mods]]
+modId = "ae2fct_gametest"
+version = "1.0.0"
+displayName = "AE2FCT GameTests"
+description = "GameTest-only regression coverage for AE2FCT."
+
+[[dependencies.ae2fct_gametest]]
+modId = "ae2fct"
+mandatory = true
+versionRange = "[0,)"
+ordering = "AFTER"
+side = "BOTH"

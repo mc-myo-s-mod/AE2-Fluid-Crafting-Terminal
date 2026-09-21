@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    "#ae2fct:gametest_bucket_ingredients",
+    "minecraft:paper"
+  ],
+  "result": {
+    "count": 1,
+    "id": "minecraft:ice"
+  }
+}

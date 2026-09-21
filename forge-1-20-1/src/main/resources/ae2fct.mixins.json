@@ -1,0 +1,45 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "me.myogoo.ae2fct.mixin",
+  "compatibilityLevel": "JAVA_17",
+  "refmap": "ae2fct.refmap.json",
+  "mixins": [
+    "CraftConfirmMenuMixin",
+    "CraftingTermSlotMixin",
+    "CraftingTermMenuMixin",
+    "FillCraftingGridFromRecipePacketMixin",
+    "IngredientMixin",
+    "ie.IngredientFluidStackMixin",
+    "MEStorageMenuMixin",
+    "NetworkStorageMixin",
+    "PatternEncodingTermMenuMixin",
+    "RecipeManagerMixin",
+    "crafting.AECraftingPatternMixin",
+    "fastsuite.CachedRecipeListMixin",
+    "et.ETFillRecipeBasePacketMixin",
+    "et.ETFillRecipePacketMixin",
+    "et.ETTerminalBaseMenuMixin",
+    "minecraft.AbstractContainerMenuMixin",
+    "minecraft.ShapelessRecipeMixin"
+  ],
+  "client": [
+    "GuiGraphicsMixin",
+    "emi.EmiApiAccessor",
+    "emi.EmiUseCraftingRecipeHandlerMixin",
+    "emi.EmiScreenManagerMixin",
+    "jeirei.EncodingHelperMixin",
+    "jei.UseCraftingRecipeTransferMixin",
+    "jei.JeiFocusInputHandlerMixin",
+    "rei.ReiUseCraftingRecipeTransferMixin",
+    "rei.ScreenOverlayImplMixin",
+    "rei.EntryWidgetMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  },
+  "overwrites": {
+    "requireAnnotations": true
+  },
+  "plugin": "me.myogoo.ae2fct.mixin.Plugin"
+}

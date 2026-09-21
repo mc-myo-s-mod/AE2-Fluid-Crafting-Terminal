@@ -1,0 +1,24 @@
+// Only task entry points live here; Gradle 9 selects the native build's Java 25 toolchain.
+def isWindows = System.getProperty('os.name').toLowerCase(Locale.ROOT).contains('windows')
+def wrapper = isWindows ? ['cmd', '/d', '/c', 'gradlew.bat'] : ['sh', './gradlew']
+def forwardedProperties = gradle.startParameter.projectProperties.collect { key, value -> "-P${key}=${value}".toString() }
+def forwardedFlags = gradle.startParameter.offline ? ['--offline'] : []
+
+['clean', 'assemble', 'build', 'check', 'compileJava', 'test',
+ 'runData', 'runClient', 'runServer', 'runGameTestServer', 'runRenderTestClient',
+ 'neoForgeIdeSync'].each { taskName ->
+    tasks.register(taskName, Exec) {
+        group = '26.1.2'
+        description = "Runs ${taskName} with the 26.1.2 Gradle wrapper and Java 25."
+        workingDir projectDir
+        commandLine wrapper + [taskName, '--console=plain', '--no-daemon', '--no-configuration-cache'] + forwardedFlags + forwardedProperties
+    }
+}
+
+tasks.matching { it.name != 'clean' }.configureEach {
+    mustRunAfter tasks.named('clean')
+}
+
+tasks.named('build') {
+    mustRunAfter tasks.named('runData')
+}

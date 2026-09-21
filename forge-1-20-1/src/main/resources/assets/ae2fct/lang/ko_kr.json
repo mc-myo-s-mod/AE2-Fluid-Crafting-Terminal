@@ -1,0 +1,13 @@
+{
+  "item.ae2fct.virtual_fluid_item": "가상 액체",
+  "item.ae2fct.terminal_fluid_interact_card": "터미널 액체 상호작용 카드",
+  "item.ae2fct.terminal_fluid_interact_card.desc": "양동이 없이 터미널에서 액체 조합을 가능하게 합니다.",
+  "gui.ae2fct.config.title": "AE2 액체 조합 터미널",
+  "gui.ae2fct.config.show_bucket_recipes": "가상 액체로 양동이 레시피 보기",
+  "gui.ae2fct.config.show_fluid_recipes": "가상 액체로 액체 레시피 보기",
+  "gui.ae2fct.config.show_ae2_fluid_key_bucket_recipes": "AE2 액체로 양동이 레시피 보기",
+  "gui.ae2fct.category.virtual_fluid_blacklist": "가상 액체 차단 목록",
+  "gui.ae2fct.category.virtual_fluid_blacklist.footer": "실제 양동이 필요",
+  "gui.ae2fct.category.virtual_fluid_blacklist.tooltip": "로컬 recipe_transfer.virtualFluidRecipeBlacklist의 원본 양동이 레시피를 표시합니다. 터미널은 서버 정책을 따릅니다.",
+  "emi.category.ae2fct.virtual_fluid_blacklist": "가상 액체 차단 목록"
+}

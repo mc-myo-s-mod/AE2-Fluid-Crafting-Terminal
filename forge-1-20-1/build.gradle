@@ -1,0 +1,268 @@
+buildscript {
+    repositories {
+        maven { url = 'https://repo.spongepowered.org/repository/maven-public/' }
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'org.spongepowered:mixingradle:0.7-SNAPSHOT'
+    }
+}
+
+plugins {
+    id 'eclipse'
+    id 'idea'
+    id 'net.minecraftforge.gradle' version '[6.0.16,6.2)'
+}
+
+apply plugin: 'org.spongepowered.mixin'
+
+group = mod_group_id
+version = mod_version
+
+base {
+    archivesName = "AE2-Fluid-Crafting-Terminal-${minecraft_version}"
+}
+
+java {
+    toolchain.languageVersion = JavaLanguageVersion.of(17)
+}
+
+sourceSets {
+    gameTestData {
+    }
+
+    gameTest {
+        compileClasspath += sourceSets.main.output + sourceSets.main.compileClasspath
+        runtimeClasspath += sourceSets.main.output + sourceSets.main.runtimeClasspath
+    }
+}
+
+
+minecraft {
+    mappings channel: mapping_channel, version: mapping_version
+    copyIdeResources = true
+
+    runs {
+        configureEach {
+            workingDirectory project.file('run')
+            property 'forge.logging.markers', 'REGISTRIES'
+            property 'forge.logging.console.level', 'debug'
+            mods {
+                main {
+                    source sourceSets.main
+                }
+            }
+        }
+
+        client {
+            property 'forge.enabledGameTestNamespaces', mod_id
+            property 'guideme.ae2.guide.sources', "${file("src/main/resources").absolutePath}/assets/${mod_id}/ae2guide"
+            property 'guideme.ae2.guide.sourcesNamespace', mod_id
+            if (project.hasProperty('ae2fctClientProbe')) {
+                property 'ae2fct.clientProbe', 'true'
+                mods {
+                    ae2fct_gametest {
+                        source sourceSets.gameTest
+                    }
+                }
+            }
+        }
+
+        server {
+            property 'forge.enabledGameTestNamespaces', mod_id
+            args '--nogui'
+        }
+
+        gameTestServer {
+            property 'forge.enabledGameTestNamespaces', mod_id
+            mods {
+                main {
+                    source sourceSets.main
+                    source sourceSets.gameTestData
+                }
+                ae2fct_gametest {
+                    source sourceSets.gameTest
+                }
+            }
+        }
+
+        data {
+            workingDirectory project.file('run-data')
+            args '--mod', mod_id, '--all',
+                    '--output', file('src/generated/resources/'),
+                    '--existing', file('src/main/resources/'),
+                    '--existing', rootProject.file('common/src/main/resources/')
+        }
+    }
+}
+
+mixin {
+    add sourceSets.main, "${mod_id}.refmap.json"
+    config "${mod_id}.mixins.json"
+}
+
+sourceSets.main.resources { srcDir 'src/generated/resources' }
+
+repositories {
+    mavenCentral()
+    flatDir {
+        dir 'libs'
+    }
+    maven {
+        url = "https://modmaven.dev"
+        content {
+            includeGroup "appeng"
+            includeGroup "de.mari_023"
+        }
+    }
+    maven {
+        name = "Jared's maven"
+        url = "https://maven.blamejared.com/"
+    }
+    maven {
+        name = "TerraformersMC"
+        url = "https://maven.terraformersmc.com/"
+    }
+    maven {
+        name = "Architectury"
+        url = "https://maven.architectury.dev/"
+    }
+    maven {
+        name = "Shedaniel"
+        url = "https://maven.shedaniel.me/"
+    }
+    maven {
+        url = "https://api.modrinth.com/maven"
+    }
+    maven {
+        url "https://cursemaven.com"
+    }
+}
+
+dependencies {
+    minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
+    implementation(jarJar("io.github.llamalad7:mixinextras-forge:0.5.0")) {
+        jarJar.ranged(it, "[0.5.0,)")
+    }
+
+    compileOnly fg.deobf("maven.modrinth:extended-terminal:1.20.1-${ET_version}")
+    compileOnly fg.deobf("maven.modrinth:immersiveengineering:10.2.0-183")
+    if (project.hasProperty('ae2fctIeTests')) {
+        runtimeOnly fg.deobf("maven.modrinth:immersiveengineering:10.2.0-183")
+    }
+
+    compileOnly "io.github.llamalad7:mixinextras-common:0.5.0"
+
+    implementation fg.deobf("me.myogoo:myotus:${Myotus_version}")
+    implementation fg.deobf("appeng:appliedenergistics2-forge:${AE2_version}")
+    runtimeOnly fg.deobf("org.appliedenergistics:guideme:${guideme_version}")
+
+    compileOnly fg.deobf("mezz.jei:jei-${minecraft_version}-common-api:${JEI_version}")
+    compileOnly fg.deobf("mezz.jei:jei-${minecraft_version}-forge-api:${JEI_version}")
+    compileOnly fg.deobf("mezz.jei:jei-${minecraft_version}-forge:${JEI_version}")
+    compileOnly fg.deobf("dev.emi:emi-forge:${EMI_version}")
+    compileOnly fg.deobf("me.shedaniel:RoughlyEnoughItems-forge:${REI_version}")
+    compileOnly fg.deobf("me.shedaniel.cloth:cloth-config-forge:${cloth_config_version}")
+    compileOnly fg.deobf("dev.architectury:architectury-forge:${architectury_version}")
+    if (project.findProperty('itemListMod') == 'rei') {
+        runtimeOnly fg.deobf("me.shedaniel:RoughlyEnoughItems-forge:${REI_version}")
+        runtimeOnly fg.deobf("me.shedaniel.cloth:cloth-config-forge:${cloth_config_version}")
+        runtimeOnly fg.deobf("dev.architectury:architectury-forge:${architectury_version}")
+    } else {
+        runtimeOnly fg.deobf("mezz.jei:jei-${minecraft_version}-forge:${JEI_version}")
+        runtimeOnly fg.deobf("curse.maven:ae2-jei-integration-1074338:5748513")
+        runtimeOnly fg.deobf("dev.emi:emi-forge:${EMI_version}")
+    }
+
+    if(project.enable_et == "true") {
+        runtimeOnly fg.deobf("maven.modrinth:extended-terminal:1.20.1-${ET_version}")
+    }
+
+    annotationProcessor "io.github.llamalad7:mixinextras-common:0.5.0"
+    annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
+}
+
+tasks.named('processResources', ProcessResources).configure {
+    dependsOn tasks.named('compileJava')
+
+    from(layout.buildDirectory.dir('tmp/compileJava')) {
+        include "${mod_id}.refmap.json"
+    }
+
+    var replaceProperties = [
+            minecraft_version      : minecraft_version,
+            minecraft_version_range: minecraft_version_range,
+            forge_version          : forge_version,
+            forge_version_range    : forge_version_range,
+            loader_version_range   : loader_version_range,
+            mod_id                 : mod_id,
+            mod_name               : mod_name,
+            mod_license            : mod_license,
+            mod_version            : mod_version,
+            mod_authors            : mod_authors,
+            mod_description        : mod_description,
+            Myotus_version         : Myotus_version
+    ]
+
+    inputs.properties replaceProperties
+
+    filesMatching(['META-INF/mods.toml', 'pack.mcmeta']) {
+        expand replaceProperties + [project: project]
+    }
+}
+
+tasks.named('jar', Jar).configure {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+
+    manifest {
+        attributes([
+                'Specification-Title'     : mod_id,
+                'Specification-Vendor'    : mod_authors,
+                'Specification-Version'   : '1',
+                'Implementation-Title'    : project.name,
+                'Implementation-Version'  : project.jar.archiveVersion,
+                'Implementation-Vendor'   : mod_authors,
+                'Implementation-Timestamp': new Date().format("yyyy-MM-dd'T'HH:mm:ssZ")
+        ])
+    }
+
+    finalizedBy 'reobfJar'
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+}
+
+tasks.register('verifyBlacklistSyncMapping') {
+    dependsOn tasks.named('jarJar')
+    doLast {
+        def refmapFile = zipTree(tasks.named('jarJar').get().archiveFile.get().asFile)
+                .matching { include "${mod_id}.refmap.json" }.singleFile
+        def mappings = new groovy.json.JsonSlurper().parse(refmapFile).mappings
+        if (mappings['me/myogoo/ae2fct/mixin/MEStorageMenuMixin']?.broadcastChanges
+                != 'Lappeng/menu/me/common/MEStorageMenu;m_38946_()V') {
+            throw new GradleException('The release JAR is missing the Forge blacklist sync method mapping.')
+        }
+        if (mappings['me/myogoo/ae2fct/mixin/fastsuite/CachedRecipeListMixin']
+                ?.get('Lnet/minecraft/world/item/crafting/Recipe;matches(Lnet/minecraft/world/Container;Lnet/minecraft/world/level/Level;)Z')
+                != 'Lnet/minecraft/world/item/crafting/Recipe;m_5818_(Lnet/minecraft/world/Container;Lnet/minecraft/world/level/Level;)Z') {
+            throw new GradleException('The release JAR is missing the FastSuite blacklist method mapping.')
+        }
+    }
+}
+
+tasks.named('check') { dependsOn tasks.named('verifyBlacklistSyncMapping') }
+
+tasks.withType(JavaExec).configureEach {
+    standardInput = System.in
+}
+
+// Package the opt-in probe for testing the reobfuscated production environment.
+tasks.register('clientProbeJar', Jar) {
+    archiveClassifier = 'client-probe'
+    from sourceSets.gameTest.output
+    finalizedBy 'reobfClientProbeJar'
+}
+reobf {
+    clientProbeJar {}
+}
