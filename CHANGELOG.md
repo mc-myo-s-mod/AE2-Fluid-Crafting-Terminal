@@ -2,7 +2,7 @@
 
 Loader-specific release notes live in each module's `CHANGELOG.md`; the release workflow uses the selected module file.
 
-## 19.1.0 (Minecraft 1.21.1)
+## 19.1.1 (Minecraft 1.21.1)
 
 ### Features
 - Added common QoL config.

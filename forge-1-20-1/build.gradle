@@ -101,6 +101,13 @@ mixin {
     config "${mod_id}.mixins.json"
 }
 
+// MixinGradle writes these outside the class output; retain them in the compile cache.
+tasks.named('compileJava', JavaCompile).configure {
+    outputs.files(layout.buildDirectory.file('tmp/compileJava/compileJava-refmap.json'),
+            layout.buildDirectory.file('tmp/compileJava/compileJava-mappings.tsrg'),
+            layout.buildDirectory.file("tmp/compileJava/${mod_id}.refmap.json"))
+}
+
 sourceSets.main.resources { srcDir 'src/generated/resources' }
 
 repositories {
@@ -212,6 +219,7 @@ tasks.named('processResources', ProcessResources).configure {
 }
 
 tasks.named('jar', Jar).configure {
+    archiveClassifier = 'dev'
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 
     manifest {
@@ -227,6 +235,14 @@ tasks.named('jar', Jar).configure {
     }
 
     finalizedBy 'reobfJar'
+}
+
+tasks.named('jarJar', Jar).configure {
+    archiveClassifier = ''
+}
+
+tasks.named('build').configure {
+    dependsOn tasks.named('reobfJarJar')
 }
 
 tasks.withType(JavaCompile).configureEach {

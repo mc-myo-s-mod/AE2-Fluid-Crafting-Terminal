@@ -39,18 +39,18 @@ Use either the root bridge or the native wrapper for 26.1.2. Do not run the root
 
 CI runs on pushes to `master`, pull requests targeting `master`, and manual dispatch. It builds all three Minecraft versions; AE2FCT GameTests are also required. New commits cancel superseded CI runs.
 
-To publish, merge the changes into `master`, create a tag `v<minecraft_version>-<mod_version>` matching that module's `gradle.properties`, then publish its GitHub Release. Pushing a tag alone does not publish. The workflow checks that the tag belongs to `master`, builds only the selected module, attaches the JAR to the release, and publishes to CurseForge and Modrinth using `CURSEFORGE_TOKEN` and `MODRINTH_TOKEN`. Mod and Myotus `-SNAPSHOT` versions are rejected. Forge releases use the bundled `-all.jar` artifact, uploaded with the normal JAR filename.
+To publish, merge the changes into `master`, create a tag `v<minecraft_version>-<mod_version>` matching that module's `gradle.properties`, then publish its GitHub Release. Pushing a tag alone does not publish. The workflow checks that the tag belongs to `master`, builds only the selected module, attaches the JAR to the release, and publishes to CurseForge and Modrinth using `CURSEFORGE_TOKEN` and `MODRINTH_TOKEN`. Mod and Myotus `-SNAPSHOT` versions are rejected. Forge builds produce a bundled release JAR with the normal filename and a separate `-dev.jar`; publish only the bundled release JAR.
 
 Tags matching the current module properties and their Myotus requirements are:
 
 | Target | Release tag | Myotus |
 | --- | --- | --- |
 | Forge 1.20.1 | `v1.20.1-15.1.0` | `15.1.0` |
-| NeoForge 1.21.1 | `v1.21.1-19.1.0` | `19.1.1` |
+| NeoForge 1.21.1 | `v1.21.1-19.1.1` | `19.1.1` |
 | NeoForge 26.1.2 | `v26.1.2-26.0.0` | `26.0.0` |
 
 The Myotus versions above are resolved from Maven Central by the module builds.
-If re-releasing an existing 1.20.1 or 1.21.1 line, including `v1.21.1-19.1.0`, increment that module's `mod_version` and publish a new tag instead of reusing an already-published tag.
+If a release tag is already published, increment that module's `mod_version` and publish a new tag instead of reusing it.
 
 ## License
 code: LGPL 3.0

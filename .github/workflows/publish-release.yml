@@ -92,10 +92,6 @@ jobs:
           fi
           artifact_name="AE2-Fluid-Crafting-Terminal-${mc_version}-${mod_version}"
           artifact_path="$module/build/libs/$artifact_name.jar"
-          if [[ "$module" == forge-1-20-1 ]]; then
-            # Forge's jarJar artifact contains the required MixinExtras runtime.
-            artifact_path="$module/build/libs/$artifact_name-all.jar"
-          fi
           {
             echo "module=$module"
             echo "artifact_name=$artifact_name"

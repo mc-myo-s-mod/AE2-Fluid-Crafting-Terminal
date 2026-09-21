@@ -1,6 +1,6 @@
 # Changelog
 
-## 19.1.0 (Minecraft 1.21.1)
+## 19.1.1 (Minecraft 1.21.1)
 
 ### Features
 - Open the virtual-fluid blacklist category with the usage key on the Terminal Fluid Interact Card in JEI, EMI, or REI.
