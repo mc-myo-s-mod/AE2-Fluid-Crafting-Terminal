@@ -6,6 +6,8 @@ import me.myogoo.ae2fct.init.AE2FCTItems;
 import me.myogoo.ae2fct.util.FluidCraftingHelper;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Ingredient;
+import net.neoforged.neoforge.fluids.FluidType;
+import net.neoforged.neoforge.fluids.FluidUtil;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -24,9 +26,9 @@ public abstract class IngredientMixin {
             }
 
             VirtualFluid vf = stack.get(AE2FCTDataComponent.VIRTUAL_FLUID);
-            if (vf != null && !vf.fluid().isEmpty()) {
+            if (vf != null && !vf.fluid().isEmpty() && vf.fluid().getAmount() == FluidType.BUCKET_VOLUME) {
                 // Determine the corresponding bucket item for the contained fluid
-                ItemStack virtualBucket = new ItemStack(vf.fluid().getFluid().getBucket());
+                ItemStack virtualBucket = FluidUtil.getFilledBucket(vf.fluid());
 
                 // Prevent infinite recursion if the virtual item is literally the bucket itself
                 // (which shouldn't happen)

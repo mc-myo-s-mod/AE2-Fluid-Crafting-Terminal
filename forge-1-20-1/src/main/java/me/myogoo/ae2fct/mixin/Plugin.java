@@ -8,6 +8,7 @@ import org.spongepowered.asm.mixin.extensibility.IMixinInfo;
 
 import java.util.List;
 import java.util.Set;
+import java.nio.file.Files;
 
 public final class Plugin implements IMixinConfigPlugin {
     @Override
@@ -21,6 +22,26 @@ public final class Plugin implements IMixinConfigPlugin {
 
     @Override
     public boolean shouldApplyMixin(String targetClassName, String mixinClassName) {
+        if (mixinClassName.contains(".jei.et.")) {
+            if (!isLoaded("extendedterminal") || isLoaded("emi") || !isLoaded("jei")) {
+                return false;
+            }
+            if (targetClassName.contains(".extendedcrafting.")) {
+                return isLoaded("extendedcrafting");
+            }
+            if (targetClassName.contains(".avaritiaRe.") || targetClassName.contains(".avaritiaNeo.")) {
+                var avaritia = LoadingModList.get().getModFileById("avaritia");
+                if (avaritia == null) {
+                    return false;
+                }
+                // Both implementations use the same mod id. Inspect the JAR without loading optional classes.
+                String recipeClass = targetClassName.contains(".avaritiaNeo.")
+                        ? "net/byAqua3/avaritia/recipe/RecipeExtremeCrafting.class"
+                        : "committee/nova/mods/avaritia/common/crafting/recipe/ITierCraftingRecipe.class";
+                return Files.exists(avaritia.getFile().findResource(recipeClass));
+            }
+            return true;
+        }
         if (mixinClassName.contains(".ie.")) {
             return isLoaded("immersiveengineering");
         }

@@ -3,13 +3,12 @@ package me.myogoo.ae2fct.mixin.rei;
 import appeng.api.stacks.AEFluidKey;
 import appeng.api.stacks.AEItemKey;
 import appeng.client.gui.AEBaseScreen;
-import me.myogoo.ae2fct.config.FluidCraftingConfig;
 import me.myogoo.ae2fct.init.AE2FCTDataComponent;
+import me.myogoo.ae2fct.integration.rei.ReiFluidRecipeLookup;
 import me.myogoo.ae2fct.util.FluidCraftingHelper;
 import me.shedaniel.rei.api.client.config.ConfigObject;
-import me.shedaniel.rei.api.client.view.ViewSearchBuilder;
-import me.shedaniel.rei.api.common.entry.EntryStack;
-import me.shedaniel.rei.api.common.util.EntryStacks;
+import me.shedaniel.rei.api.client.registry.screen.ScreenRegistry;
+import me.shedaniel.math.impl.PointHelper;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.world.item.ItemStack;
@@ -19,9 +18,6 @@ import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
-
-import java.util.ArrayList;
-import java.util.List;
 
 @Mixin(targets = "me.shedaniel.rei.impl.client.gui.ScreenOverlayImpl", remap = false)
 public abstract class ScreenOverlayImplMixin {
@@ -42,38 +38,26 @@ public abstract class ScreenOverlayImplMixin {
         }
 
         var minecraft = Minecraft.getInstance();
-        if (!(minecraft.screen instanceof AEBaseScreen<?> aeScreen)) {
-            return;
-        }
-
-        var window = minecraft.getWindow();
-        double mouseX = minecraft.mouseHandler.xpos() * window.getGuiScaledWidth() / window.getScreenWidth();
-        double mouseY = minecraft.mouseHandler.ypos() * window.getGuiScaledHeight() / window.getScreenHeight();
-        var stackWithBounds = aeScreen.getStackUnderMouse(mouseX, mouseY);
-        if (stackWithBounds == null) {
-            return;
-        }
-
-        var target = ae2fct$getFluidTarget(stackWithBounds.stack().what());
-        if (target == null) {
-            return;
-        }
-
-        List<EntryStack<?>> entries = ae2fct$createTargetEntries(target);
-        if (entries.isEmpty()) {
-            cir.setReturnValue(false);
-            return;
-        }
-
-        ViewSearchBuilder builder = ViewSearchBuilder.builder();
-        for (EntryStack<?> entry : entries) {
-            if (showRecipes) {
-                builder.addRecipesFor(entry);
-            } else {
-                builder.addUsagesFor(entry);
+        if (minecraft.screen instanceof AEBaseScreen<?> aeScreen) {
+            var window = minecraft.getWindow();
+            double mouseX = minecraft.mouseHandler.xpos() * window.getGuiScaledWidth() / window.getScreenWidth();
+            double mouseY = minecraft.mouseHandler.ypos() * window.getGuiScaledHeight() / window.getScreenHeight();
+            var stackWithBounds = aeScreen.getStackUnderMouse(mouseX, mouseY);
+            if (stackWithBounds != null) {
+                var target = ae2fct$getFluidTarget(stackWithBounds.stack().what());
+                if (target != null) {
+                    cir.setReturnValue(ReiFluidRecipeLookup
+                            .openFluidTarget(target.fluidStack(), target.virtualFluid(), showRecipes).orElse(false));
+                    return;
+                }
             }
         }
-        cir.setReturnValue(builder.open());
+
+        if (minecraft.screen == null) {
+            return;
+        }
+        var focused = ScreenRegistry.getInstance().getFocusedStack(minecraft.screen, PointHelper.ofMouse());
+        ReiFluidRecipeLookup.openVirtualFluidTarget(focused, showRecipes).ifPresent(cir::setReturnValue);
     }
 
     @Unique
@@ -91,27 +75,6 @@ public abstract class ScreenOverlayImplMixin {
             }
         }
         return null;
-    }
-
-    @Unique
-    private static List<EntryStack<?>> ae2fct$createTargetEntries(FluidTarget target) {
-        List<EntryStack<?>> entries = new ArrayList<>();
-        boolean showBucketRecipes = target.virtualFluid()
-                ? FluidCraftingConfig.showBucketRecipesForVirtualFluids()
-                : FluidCraftingConfig.showBucketRecipesForAe2FluidKeys();
-        boolean showFluidRecipes = !target.virtualFluid()
-                || FluidCraftingConfig.showFluidRecipesForVirtualFluids();
-
-        if (showBucketRecipes) {
-            ItemStack bucket = target.fluidStack().getFluidType().getBucket(target.fluidStack());
-            if (!bucket.isEmpty()) {
-                entries.add(EntryStacks.of(bucket));
-            }
-        }
-        if (showFluidRecipes) {
-            entries.add(EntryStacks.of(target.fluidStack().getFluid(), target.fluidStack().getAmount()));
-        }
-        return entries;
     }
 
     @Unique

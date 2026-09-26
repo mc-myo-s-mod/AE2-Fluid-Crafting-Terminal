@@ -18,7 +18,9 @@ import me.myogoo.ae2fct.init.AE2FCTDataComponent;
 import me.myogoo.ae2fct.util.FluidCraftingHelper;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.material.Fluid;
 import net.neoforged.neoforge.fluids.FluidStack;
+import net.neoforged.neoforge.fluids.FluidType;
 import net.neoforged.neoforge.fluids.FluidUtil;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
@@ -57,22 +59,28 @@ public abstract class EmiScreenManagerMixin {
             showRecipes = function.apply(EmiConfig.viewRecipes);
             showUses = function.apply(EmiConfig.viewUses);
         } else {
-            fluidStack = ae2fct$getAeFluidStackUnderMouse(hovered);
-            if (fluidStack.isEmpty()) {
-                return;
-            }
             virtualFluid = false;
-            showRecipes = ae2fct$matchesKeyboardBind(function, EmiConfig.viewRecipes);
-            showUses = ae2fct$matchesKeyboardBind(function, EmiConfig.viewUses);
-            if (!showRecipes && !showUses) {
-                if (function.apply(EmiConfig.viewRecipes) || function.apply(EmiConfig.viewUses)) {
-                    cir.setReturnValue(false);
+            fluidStack = ae2fct$getAeFluidStackUnderMouse(hovered);
+            if (!fluidStack.isEmpty()) {
+                showRecipes = ae2fct$matchesKeyboardBind(function, EmiConfig.viewRecipes);
+                showUses = ae2fct$matchesKeyboardBind(function, EmiConfig.viewUses);
+                if (!showRecipes && !showUses) {
+                    if (function.apply(EmiConfig.viewRecipes) || function.apply(EmiConfig.viewUses)) {
+                        cir.setReturnValue(false);
+                    }
+                    return;
                 }
-                return;
-            }
-            if (!FluidCraftingConfig.showBucketRecipesForAe2FluidKeys()) {
-                cir.setReturnValue(false);
-                return;
+                if (!FluidCraftingConfig.showBucketRecipesForAe2FluidKeys()) {
+                    cir.setReturnValue(false);
+                    return;
+                }
+            } else {
+                fluidStack = ae2fct$getNativeFluidStack(hovered);
+                if (fluidStack.isEmpty() || !FluidCraftingConfig.showBucketRecipesForAe2FluidKeys()) {
+                    return;
+                }
+                showRecipes = function.apply(EmiConfig.viewRecipes);
+                showUses = function.apply(EmiConfig.viewUses);
             }
         }
 
@@ -101,6 +109,18 @@ public abstract class EmiScreenManagerMixin {
                 })
                 .toArray(EmiBind.ModifiedKey[]::new);
         return keys.length > 0 && function.apply(new EmiBind(source.translationKey, keys));
+    }
+
+    @Unique
+    private static FluidStack ae2fct$getNativeFluidStack(EmiIngredient hovered) {
+        EmiStack firstStack = hovered.getEmiStacks().get(0);
+        if (firstStack.getKey() instanceof Fluid fluid) {
+            return new FluidStack(
+                    fluid.builtInRegistryHolder(),
+                    FluidType.BUCKET_VOLUME,
+                    firstStack.getComponentChanges());
+        }
+        return FluidStack.EMPTY;
     }
 
     @Unique

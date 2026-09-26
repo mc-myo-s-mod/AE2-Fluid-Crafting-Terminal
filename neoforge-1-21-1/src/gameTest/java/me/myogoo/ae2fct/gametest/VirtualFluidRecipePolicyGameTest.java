@@ -9,6 +9,7 @@ import appeng.api.inventories.ISegmentedInventory;
 import appeng.api.inventories.InternalInventory;
 import appeng.api.networking.energy.IEnergySource;
 import appeng.api.networking.security.IActionSource;
+import appeng.api.stacks.AEFluidKey;
 import appeng.api.stacks.AEKey;
 import appeng.api.stacks.KeyCounter;
 import appeng.api.storage.ILinkStatus;
@@ -23,6 +24,8 @@ import appeng.helpers.InventoryAction;
 import appeng.menu.ISubMenu;
 import appeng.menu.SlotSemantics;
 import appeng.menu.locator.MenuLocators;
+import appeng.menu.me.common.GridInventoryEntry;
+import appeng.menu.me.common.IClientRepo;
 import appeng.menu.me.crafting.CraftConfirmMenu;
 import appeng.menu.me.items.CraftingTermMenu;
 import appeng.menu.me.items.PatternEncodingTermMenu;
@@ -33,10 +36,13 @@ import appeng.util.inv.AppEngInternalInventory;
 import dev.shadowsoffire.fastsuite.AuxRecipeManager;
 import me.myogoo.ae2fct.Ae2fct;
 import me.myogoo.ae2fct.config.FluidCraftingConfig;
+import me.myogoo.ae2fct.init.AE2FCTDataComponent;
 import me.myogoo.ae2fct.integration.recipeviewer.VirtualFluidBlacklistRecipes;
+import me.myogoo.ae2fct.codec.VirtualFluid;
 import me.myogoo.ae2fct.item.VirtualFluidItem;
 import me.myogoo.ae2fct.util.FluidCraftingHelper;
 import net.minecraft.core.NonNullList;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.network.chat.Component;
@@ -62,14 +68,17 @@ import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import net.neoforged.fml.ModList;
 import net.neoforged.neoforge.common.util.FakePlayerFactory;
+import net.neoforged.neoforge.fluids.FluidStack;
 
 import java.lang.invoke.MethodHandles;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 
 @GameTestHolder(Ae2fct.MODID)
 @PrefixGameTestTemplate(false)
@@ -172,6 +181,71 @@ public final class VirtualFluidRecipePolicyGameTest {
     }
 
     @GameTest(template = "empty")
+    public static void immersiveEngineeringCreosoteRequiresFullBucket(GameTestHelper helper) {
+        if (!ModList.get().isLoaded("immersiveengineering")) {
+            helper.succeed();
+            return;
+        }
+
+        var level = helper.getLevel();
+        var recipeId = ResourceLocation.fromNamespaceAndPath("immersiveengineering",
+                "crafting/treated_wood_horizontal");
+        var recipe = (CraftingRecipe) level.getRecipeManager().byKey(recipeId).orElseThrow().value();
+        var creosote = BuiltInRegistries.FLUID.get(
+                ResourceLocation.fromNamespaceAndPath("immersiveengineering", "creosote"));
+        ItemStack[] ingredients = new ItemStack[9];
+        java.util.Arrays.fill(ingredients, new ItemStack(Items.OAK_PLANKS));
+        ingredients[4] = new ItemStack(creosote.getBucket());
+        assertTrue(helper, recipe.matches(craftingInput(ingredients), level), "real creosote bucket control");
+
+        ItemStack virtual = VirtualFluidItem.createItemStack(creosote);
+        ingredients[4] = virtual;
+        assertTrue(helper, recipe.matches(craftingInput(ingredients), level),
+                "IE treated-wood recipe accepts a full virtual creosote bucket");
+
+        ItemStack insufficient = virtual.copy();
+        insufficient.set(AE2FCTDataComponent.VIRTUAL_FLUID,
+                new VirtualFluid(new FluidStack(creosote, 999), 1000));
+        ingredients[4] = insufficient;
+        assertFalse(helper, recipe.matches(craftingInput(ingredients), level),
+                "IE treated-wood recipe rejects less than one bucket of creosote");
+
+        var previousBlacklist = FluidCraftingConfig.COMMON.virtualFluidRecipeBlacklist.get();
+        Player player = FakePlayerFactory.getMinecraft(level);
+        try {
+            setVirtualFluidRecipeBlacklist();
+            CraftingTermMenu menu = createCraftingMenu(player, level);
+            var grid = menu.getSlots(SlotSemantics.CRAFTING_GRID);
+            var output = (CraftingTermSlot) menu.getSlots(SlotSemantics.CRAFTING_RESULT).getFirst();
+            for (int slot = 0; slot < 9; slot++) {
+                grid.get(slot).set(slot == 4 ? virtual.copy() : new ItemStack(Items.OAK_PLANKS));
+            }
+            output.doClick(InventoryAction.PICKUP_OR_SET_DOWN, player);
+            assertEquals(helper, 8, menu.getCarried().getCount(), "virtual creosote produces eight treated planks");
+            assertTrue(helper, grid.stream().allMatch(slot -> slot.getItem().isEmpty()),
+                    "crafting consumes the virtual bucket without returning an empty bucket");
+
+            menu.setCarried(ItemStack.EMPTY);
+            setVirtualFluidRecipeBlacklist(recipeId);
+            for (int slot = 0; slot < 9; slot++) {
+                grid.get(slot).set(slot == 4 ? virtual.copy() : new ItemStack(Items.OAK_PLANKS));
+            }
+            output.doClick(InventoryAction.PICKUP_OR_SET_DOWN, player);
+            assertTrue(helper, menu.getCarried().isEmpty(), "blacklisted treated wood requires a real bucket");
+            assertTrue(helper, FluidCraftingHelper.isVirtualFluidItem(grid.get(4).getItem()),
+                    "blocked crafting preserves virtual creosote");
+            grid.get(4).set(new ItemStack(creosote.getBucket()));
+            output.doClick(InventoryAction.PICKUP_OR_SET_DOWN, player);
+            assertEquals(helper, 8, menu.getCarried().getCount(), "blacklisted recipe still accepts real creosote");
+            assertTrue(helper, grid.get(4).getItem().is(Items.BUCKET), "real creosote leaves an empty bucket");
+        } finally {
+            FluidCraftingConfig.COMMON.virtualFluidRecipeBlacklist.set(previousBlacklist);
+            FluidCraftingHelper.clearFluidCraftingEnabled();
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty")
     public static void unlistedTagIngredientAllowsVirtualFluid(GameTestHelper helper) {
         FluidCraftingHelper.clearFluidCraftingEnabled();
 
@@ -216,6 +290,51 @@ public final class VirtualFluidRecipePolicyGameTest {
             assertRecipe(helper, LOOKUP_ALLOWED_OVERLAP_RECIPE,
                     findPolicyRecipe(level, virtualWater, new ItemStack(Items.SUGAR)).orElse(null),
                     "overlapping blacklisted recipe is skipped in favor of allowed alternative");
+        } finally {
+            FluidCraftingConfig.COMMON.virtualFluidRecipeBlacklist.set(previousBlacklist);
+            FluidCraftingHelper.clearFluidCraftingEnabled();
+        }
+
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty")
+    public static void transferPreviewBlacklistLeavesRealBucketMissingWhenFluidAvailable(GameTestHelper helper) {
+        Level level = helper.getLevel();
+        List<? extends String> previousBlacklist = FluidCraftingConfig.COMMON.virtualFluidRecipeBlacklist.get();
+
+        try {
+            Player player = FakePlayerFactory.getMinecraft(helper.getLevel());
+            CraftingTermMenu menu = createCraftingMenu(player, level);
+            Ingredient waterBucket = Ingredient.of(Items.WATER_BUCKET);
+            IClientRepo storedWater = clientRepo(new GridInventoryEntry(1, AEFluidKey.of(Fluids.WATER),
+                    AEFluidKey.AMOUNT_BUCKET, 0, false));
+            IClientRepo craftableWater = clientRepo(new GridInventoryEntry(2, AEFluidKey.of(Fluids.WATER),
+                    0, AEFluidKey.AMOUNT_BUCKET, true));
+
+            setVirtualFluidRecipeBlacklist(LOOKUP_BLACKLISTED_RECIPE);
+            var blockedStored = FluidCraftingHelper.withVirtualFluidRecipePolicy(menu, LOOKUP_BLACKLISTED_RECIPE,
+                    () -> FluidCraftingHelper.checkFluidAvailabilityInClientRepo(waterBucket, storedWater));
+            assertFalse(helper, blockedStored.available(),
+                    "blacklisted transfer preview must leave stored fluid bucket ingredient missing");
+            assertFalse(helper, blockedStored.craftable(),
+                    "blacklisted transfer preview must not mark stored fluid bucket ingredient craftable");
+            var blockedCraftable = FluidCraftingHelper.withVirtualFluidRecipePolicy(menu, LOOKUP_BLACKLISTED_RECIPE,
+                    () -> FluidCraftingHelper.checkFluidAvailabilityInClientRepo(waterBucket, craftableWater));
+            assertFalse(helper, blockedCraftable.available(),
+                    "blacklisted transfer preview must leave craftable fluid bucket ingredient missing");
+            assertFalse(helper, blockedCraftable.craftable(),
+                    "blacklisted transfer preview must not promote craftable fluid to bucket craftable");
+
+            setVirtualFluidRecipeBlacklist();
+            var allowedStored = FluidCraftingHelper.withVirtualFluidRecipePolicy(menu, LOOKUP_BLACKLISTED_RECIPE,
+                    () -> FluidCraftingHelper.checkFluidAvailabilityInClientRepo(waterBucket, storedWater));
+            assertTrue(helper, allowedStored.available(),
+                    "unlisted transfer preview may satisfy bucket ingredient from stored fluid");
+            var allowedCraftable = FluidCraftingHelper.withVirtualFluidRecipePolicy(menu, LOOKUP_BLACKLISTED_RECIPE,
+                    () -> FluidCraftingHelper.checkFluidAvailabilityInClientRepo(waterBucket, craftableWater));
+            assertTrue(helper, allowedCraftable.craftable(),
+                    "unlisted transfer preview may mark bucket ingredient craftable from fluid autocrafting");
         } finally {
             FluidCraftingConfig.COMMON.virtualFluidRecipeBlacklist.set(previousBlacklist);
             FluidCraftingHelper.clearFluidCraftingEnabled();
@@ -291,11 +410,19 @@ public final class VirtualFluidRecipePolicyGameTest {
                     "cached blacklisted virtual-bucket recipe must not be picked up");
             assertTrue(helper, FluidCraftingHelper.isVirtualFluidItem(menu.getCraftingMatrix().getStackInSlot(0)),
                     "blocked cached crafting must not consume the virtual fluid input");
+            grid.getFirst().set(ItemStack.EMPTY);
+            grid.getFirst().set(VirtualFluidItem.createItemStack(Fluids.WATER));
+            assertTrue(helper, output.getItem().isEmpty(),
+                    "blacklisted virtual-bucket recipe must hide the crafting output");
 
             grid.getFirst().set(new ItemStack(Items.WATER_BUCKET));
             assertRecipe(helper, LOOKUP_BLACKLISTED_RECIPE, menu.getCurrentRecipe(),
                     "real bucket recipe remains selected after blacklist");
             assertFalse(helper, output.getItem().isEmpty(), "blacklisted real-bucket recipe must still show output");
+            grid.getFirst().set(VirtualFluidItem.createItemStack(Fluids.WATER));
+            assertTrue(helper, output.getItem().isEmpty(),
+                    "replacing a real bucket with virtual fluid must clear the cached output");
+            grid.getFirst().set(new ItemStack(Items.WATER_BUCKET));
             output.doClick(InventoryAction.PICKUP_OR_SET_DOWN, player);
             assertFalse(helper, menu.getCarried().isEmpty(),
                     "blacklisted recipe must remain craftable with a real bucket");
@@ -409,6 +536,10 @@ public final class VirtualFluidRecipePolicyGameTest {
             entries.add(recipeId.toString());
         }
         FluidCraftingConfig.COMMON.virtualFluidRecipeBlacklist.set(entries);
+    }
+
+    private static IClientRepo clientRepo(GridInventoryEntry entry) {
+        return new TestClientRepo(Set.of(entry));
     }
 
     private static PatternEncodingTermMenu createPatternMenu(GameTestHelper helper, Level level) {
@@ -554,6 +685,22 @@ public final class VirtualFluidRecipePolicyGameTest {
 
         @Override
         public void sendDataChange(AbstractContainerMenu menu, int slot, int value) {
+        }
+    }
+
+    private record TestClientRepo(Set<GridInventoryEntry> entries) implements IClientRepo {
+        @Override
+        public void handleUpdate(boolean fullUpdate, List<GridInventoryEntry> entries) {
+        }
+
+        @Override
+        public Set<GridInventoryEntry> getAllEntries() {
+            return entries;
+        }
+
+        @Override
+        public Collection<GridInventoryEntry> getByIngredient(Ingredient ingredient) {
+            return List.of();
         }
     }
 

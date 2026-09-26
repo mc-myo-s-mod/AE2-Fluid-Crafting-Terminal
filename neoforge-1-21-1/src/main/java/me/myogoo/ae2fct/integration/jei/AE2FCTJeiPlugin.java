@@ -29,7 +29,6 @@ import net.minecraft.core.RegistryAccess;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.CraftingRecipe;
 import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.level.material.Fluid;
@@ -115,7 +114,8 @@ public final class AE2FCTJeiPlugin implements IModPlugin {
         private final IDrawable arrow;
 
         private VirtualFluidBlacklistCategory(IGuiHelper guiHelper) {
-            this.icon = guiHelper.createDrawableIngredient(VanillaTypes.ITEM_STACK, new ItemStack(Items.WATER_BUCKET));
+            this.icon = guiHelper.createDrawableIngredient(VanillaTypes.ITEM_STACK,
+                    new ItemStack(AE2FCTItems.TERMINAL_FLUID_INTERACT_CARD.get()));
             this.arrow = guiHelper.getRecipeArrow();
         }
 

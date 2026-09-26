@@ -24,6 +24,9 @@ import me.shedaniel.rei.api.common.util.EntryStacks;
 import me.shedaniel.rei.impl.client.registry.display.DisplayRegistryImpl;
 import me.myogoo.ae2fct.integration.emi.VirtualFluidBlacklistEmiRecipe;
 import me.myogoo.ae2fct.integration.recipeviewer.VirtualFluidBlacklistRecipe;
+import me.myogoo.extendedterminal.integration.jei.extendedterminal.handler.ETCraftingRecipeTransfer;
+import me.myogoo.extendedterminal.integration.jei.extendedterminal.handler.ETSmithingRecipeTransfer;
+import me.myogoo.extendedterminal.integration.jei.extendedterminal.handler.ETStonecutterRecipeTransfer;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.core.NonNullList;
@@ -67,6 +70,11 @@ final class Ae2fctClientProbe {
         boolean reiLoaded = ModList.get().isLoaded("roughlyenoughitems");
         if (ModList.get().isLoaded("jei") && !reiLoaded) {
             ensureInitialized(UseCraftingRecipeTransfer.class);
+            if (ModList.get().isLoaded("extendedterminal")) {
+                ensureInitialized(ETCraftingRecipeTransfer.class);
+                ensureInitialized(ETSmithingRecipeTransfer.class);
+                ensureInitialized(ETStonecutterRecipeTransfer.class);
+            }
         }
         if (ModList.get().isLoaded("emi")) {
             EmiProbe.run(minecraft);

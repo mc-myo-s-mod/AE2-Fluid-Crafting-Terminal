@@ -163,6 +163,10 @@ public class FluidCraftingHelper {
 
     public static boolean hasAvailableFluidInClientRepo(Ingredient ingredient, IClientRepo clientRepo,
             Level level, long requiredAmount) {
+        if (!VirtualFluidRecipePolicy.isPreviewAllowed()) {
+            return false;
+        }
+
         if (clientRepo == null) {
             return false;
         }
@@ -193,6 +197,10 @@ public class FluidCraftingHelper {
     }
 
     public static boolean isFluidCraftableInClientRepo(Ingredient ingredient, IClientRepo clientRepo, Level level) {
+        if (!VirtualFluidRecipePolicy.isPreviewAllowed()) {
+            return false;
+        }
+
         if (clientRepo == null) {
             return false;
         }

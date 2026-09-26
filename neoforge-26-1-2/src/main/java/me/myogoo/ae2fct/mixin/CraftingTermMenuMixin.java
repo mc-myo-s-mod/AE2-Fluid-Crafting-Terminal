@@ -1,7 +1,7 @@
 package me.myogoo.ae2fct.mixin;
 
-import appeng.menu.me.common.IClientRepo;
 import appeng.menu.me.common.MEStorageMenu;
+import appeng.menu.me.common.IClientRepo;
 import appeng.menu.me.items.CraftingTermMenu;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import me.myogoo.ae2fct.integration.FluidCraftingTerminalIntegration;
@@ -16,10 +16,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
 
 @Mixin(value = CraftingTermMenu.class, remap = false)
 public abstract class CraftingTermMenuMixin extends MEStorageMenu {
@@ -36,53 +33,10 @@ public abstract class CraftingTermMenuMixin extends MEStorageMenu {
     @Inject(method = "findMissingIngredients", at = @At("RETURN"), cancellable = true)
     private void checkFluidForMissingIngredients(Map<Integer, Ingredient> ingredients,
             CallbackInfoReturnable<CraftingTermMenu.MissingIngredientSlots> cir) {
-        if (!FluidCraftingTerminalIntegration.hasFluidInteractUpgrade(this)
-                || !VirtualFluidRecipePolicy.isPreviewAllowed()) {
-            return;
-        }
-
         CraftingTermMenu.MissingIngredientSlots result = cir.getReturnValue();
-        if (!result.anyMissingOrCraftable()) {
-            return;
-        }
-
-        IClientRepo clientRepo = this.getClientRepo();
-        if (clientRepo == null) {
-            return;
-        }
-
-        Set<Integer> newMissing = new HashSet<>(result.missingSlots());
-        Set<Integer> newCraftable = new HashSet<>(result.craftableSlots());
-        boolean changed = false;
-
-        // missing과 craftable 슬롯 모두 검사
-        Set<Integer> slotsToCheck = new HashSet<>();
-        slotsToCheck.addAll(result.missingSlots());
-        slotsToCheck.addAll(result.craftableSlots());
-
-        for (int slot : slotsToCheck) {
-            Ingredient ingredient = ingredients.get(slot);
-            if (ingredient == null)
-                continue;
-
-            FluidCraftingHelper.FluidAvailability availability = FluidCraftingHelper
-                    .checkFluidAvailabilityInClientRepo(ingredient, clientRepo, getPlayer().level());
-
-            if (availability.available()) {
-                // fluid가 네트워크에 존재 → missing/craftable에서 제거
-                newMissing.remove(slot);
-                newCraftable.remove(slot);
-                changed = true;
-            } else if (availability.craftable() && newMissing.contains(slot)) {
-                // fluid가 craftable → missing에서 craftable로 이동
-                newMissing.remove(slot);
-                newCraftable.add(slot);
-                changed = true;
-            }
-        }
-
-        if (changed) {
-            cir.setReturnValue(new CraftingTermMenu.MissingIngredientSlots(newMissing, newCraftable));
+        var updated = FluidCraftingTerminalIntegration.resolveMissingIngredients(this, result, ingredients);
+        if (updated != result) {
+            cir.setReturnValue(updated);
         }
     }
 

@@ -15,5 +15,8 @@ public final class Ae2fctGameTestMod {
 
     private static void register(RegisterGameTestsEvent event) {
         event.register(Ae2fctGameTests.class);
+        if (net.minecraftforge.fml.ModList.get().isLoaded("extendedterminal")) {
+            event.register(EtJeiPreviewGameTests.class);
+        }
     }
 }

@@ -7,6 +7,7 @@ import org.objectweb.asm.tree.ClassNode;
 import org.spongepowered.asm.mixin.extensibility.IMixinConfigPlugin;
 import org.spongepowered.asm.mixin.extensibility.IMixinInfo;
 
+import java.nio.file.Files;
 import java.util.List;
 import java.util.Set;
 
@@ -22,6 +23,31 @@ public final class Plugin implements IMixinConfigPlugin {
 
     @Override
     public boolean shouldApplyMixin(String targetClassName, String mixinClassName) {
+        if (mixinClassName.endsWith(".ETRecipeTransferPreviewMixin")) {
+            return isLoaded("extendedterminal") && isLoaded("emi");
+        }
+        if (mixinClassName.endsWith(".ETJeiRecipeTransferMixin")) {
+            if (!isLoaded("extendedterminal") || !isLoaded("jei") || isLoaded("emi")) {
+                return false;
+            }
+            if (targetClassName.contains(".extendedcrafting.")) {
+                return isLoaded("extendedcrafting");
+            }
+            if (targetClassName.contains(".avaritiaRe.") || targetClassName.contains(".avaritiaNeo.")) {
+                var avaritia = LoadingModList.get().getModFileById("avaritia");
+                if (avaritia == null) {
+                    return false;
+                }
+                String recipeClass = targetClassName.contains(".avaritiaNeo.")
+                        ? "net/byAqua3/avaritia/recipe/RecipeExtremeCrafting.class"
+                        : "committee/nova/mods/avaritia/api/common/crafting/ITierCraftingRecipe.class";
+                return Files.exists(avaritia.getFile().findResource(recipeClass));
+            }
+            return true;
+        }
+        if (mixinClassName.contains(".rei.")) {
+            return isLoaded("roughlyenoughitems");
+        }
         if (mixinClassName.endsWith(".RecipeTransferPreviewMixin")) {
             if (targetClassName.contains(".emi.")) {
                 return isLoaded("emi");

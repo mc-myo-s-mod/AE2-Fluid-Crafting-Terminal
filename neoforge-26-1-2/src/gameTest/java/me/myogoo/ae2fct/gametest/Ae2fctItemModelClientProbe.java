@@ -3,6 +3,7 @@ package me.myogoo.ae2fct.gametest;
 import com.mojang.blaze3d.platform.NativeImage;
 import com.mojang.logging.LogUtils;
 import me.myogoo.ae2fct.item.VirtualFluidItem;
+import me.shedaniel.rei.impl.client.gui.widget.EntryWidget;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.Screenshot;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -12,10 +13,12 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.material.Fluids;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.ModList;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.client.event.RenderFrameEvent;
 import net.neoforged.neoforge.common.NeoForge;
 import org.slf4j.Logger;
+import org.spongepowered.asm.mixin.MixinEnvironment;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -35,6 +38,24 @@ public final class Ae2fctItemModelClientProbe {
 
     private static void onClientTick(ClientTickEvent.Post event) {
         Minecraft minecraft = Minecraft.getInstance();
+        boolean etJeiAudit = Boolean.getBoolean("ae2fct.etJeiAudit");
+        boolean reiAudit = Boolean.getBoolean("ae2fct.reiAudit");
+        if ((etJeiAudit || reiAudit) && !opened && minecraft.screen != null && minecraft.level == null) {
+            opened = true;
+            if (etJeiAudit && (!ModList.get().isLoaded("extendedterminal") || !ModList.get().isLoaded("jei"))) {
+                throw new AssertionError("ET JEI audit requires Extended Terminal and JEI");
+            }
+            if (reiAudit && !ModList.get().isLoaded("roughlyenoughitems")) {
+                throw new AssertionError("REI audit requires Roughly Enough Items");
+            }
+            if (reiAudit) {
+                EntryWidget.class.getDeclaredMethods();
+            }
+            MixinEnvironment.getCurrentEnvironment().audit();
+            LOGGER.info("AE2FCT {} client mixin audit PASS", reiAudit ? "REI" : "ET JEI");
+            minecraft.stop();
+            return;
+        }
         if (opened || minecraft.getOverlay() != null || minecraft.level == null || minecraft.player == null) {
             return;
         }

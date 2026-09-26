@@ -13,7 +13,6 @@ import me.myogoo.ae2fct.init.AE2FCTItems;
 import me.myogoo.ae2fct.integration.recipeviewer.VirtualFluidBlacklistRecipes;
 import net.minecraft.client.Minecraft;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.CraftingRecipe;
 import net.minecraft.world.item.crafting.RecipeHolder;
 
@@ -25,7 +24,7 @@ import java.util.List;
 public final class AE2FCTEmiPlugin implements EmiPlugin {
     private static final EmiRecipeCategory VIRTUAL_FLUID_BLACKLIST = new EmiRecipeCategory(
             VirtualFluidBlacklistRecipes.CATEGORY_ID,
-            EmiStack.of(Items.WATER_BUCKET));
+            EmiStack.of(AE2FCTItems.TERMINAL_FLUID_INTERACT_CARD.get()));
 
     @Override
     public void register(EmiRegistry registry) {

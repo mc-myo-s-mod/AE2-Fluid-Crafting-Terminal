@@ -9,6 +9,9 @@ version = mod_version
 group = mod_group_id
 
 def enableFastSuite = providers.gradleProperty('enable_fastsuite').getOrElse('false').toBoolean()
+def etRuntimeJar = providers.gradleProperty('etRuntimeJar').orNull
+def etJeiAudit = providers.gradleProperty('etJeiAudit').getOrElse('false').toBoolean()
+def reiAudit = providers.gradleProperty('reiAudit').getOrElse('false').toBoolean()
 def ae2fctRootDir = projectDir.parentFile
 def commonJavaSourceDir = new File(ae2fctRootDir, 'common/src/main/java')
 def commonResourcesSourceDir = new File(ae2fctRootDir, 'common/src/main/resources')
@@ -163,6 +166,8 @@ neoForge {
             client()
             loadedMods = [mods.ae2fct, mods.ae2fct_gametest]
             sourceSet = sourceSets.gameTest
+            systemProperty 'ae2fct.etJeiAudit', etJeiAudit.toString()
+            systemProperty 'ae2fct.reiAudit', reiAudit.toString()
         }
 
         data {
@@ -212,6 +217,9 @@ dependencies {
     compileOnly "mezz.jei:jei-${minecraft_version}-neoforge:${JEI_version}"
     compileOnly "me.shedaniel:RoughlyEnoughItems-neoforge:${REI_version}"
     runtimeOnly "org.appliedenergistics:guideme:${guideme_version}"
+    if (etRuntimeJar) {
+        runtimeOnly files(etRuntimeJar)
+    }
 
     gameTestCompileOnly "dev.shadowsoffire:FastSuite:26.1.2-7.0.0"
     if (enableFastSuite) {

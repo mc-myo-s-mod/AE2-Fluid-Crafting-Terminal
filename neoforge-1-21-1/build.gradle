@@ -170,8 +170,18 @@ dependencies {
     gameTestCompileOnly "dev.shadowsoffire:FastSuite:${FastSuite_version}"
     runtimeOnly "org.appliedenergistics:guideme:${guideme_version}"
 
-    runtimeOnly "mezz.jei:jei-${minecraft_version}-neoforge:${JEI_version}"
-    runtimeOnly "dev.emi:emi-neoforge:${EMI_version}"
+    switch (providers.gradleProperty('itemListMod').getOrElse('emi')) {
+        case 'emi':
+            runtimeOnly "dev.emi:emi-neoforge:${EMI_version}"
+            runtimeOnly "mezz.jei:jei-${minecraft_version}-neoforge:${JEI_version}"
+            break
+        case 'jei':
+            runtimeOnly "mezz.jei:jei-${minecraft_version}-neoforge:${JEI_version}"
+            break
+        case 'rei':
+            runtimeOnly "me.shedaniel:RoughlyEnoughItems-neoforge:${REI_version}"
+            break
+    }
 
     runtimeOnly "maven.modrinth:immersiveengineering:12.4.2-194"
 

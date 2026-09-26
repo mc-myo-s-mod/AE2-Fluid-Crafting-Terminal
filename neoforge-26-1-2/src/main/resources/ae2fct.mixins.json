@@ -9,6 +9,9 @@
     "CraftingTermMenuMixin",
     "CraftingTermSlotMixin",
     "FillCraftingGridFromRecipePacketMixin",
+    "et.ETFillRecipeBasePacketMixin",
+    "et.ETFillTableCraftingGridFromRecipePacketMixin",
+    "et.ETTerminalMenuMixin",
     "IngredientMixin",
     "MEStorageMenuMixin",
     "NetworkStorageMixin",
@@ -23,7 +26,9 @@
   "client": [
     "jei.FocusInputHandlerMixin",
     "jei.RecipeTransferPolicyMixin",
+    "jei.et.ETJeiRecipeTransferMixin",
     "EncodingHelperMixin",
+    "rei.EntryWidgetMixin",
     "rei.ScreenOverlayImplMixin"
   ],
   "injectors": {

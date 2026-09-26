@@ -19,15 +19,20 @@
     "et.ETFillRecipeBasePacketMixin",
     "et.ETFillTableCraftingGridFromRecipePacketMixin",
     "et.ETTerminalBaseMenuMixin",
+    "et.ETTerminalMenuMixin",
     "minecraft.AbstractContainerMenuMixin",
     "minecraft.RecipeManagerMixin",
     "minecraft.ShapelessRecipeMixin"
   ],
   "client": [
     "itemlists.RecipeTransferPreviewMixin",
+    "itemlists.ETRecipeTransferPreviewMixin",
     "emi.EmiApiAccessor",
     "emi.EmiScreenManagerMixin",
-    "jei.FocusInputHandlerMixin"
+    "jei.FocusInputHandlerMixin",
+    "jei.et.ETJeiRecipeTransferMixin",
+    "rei.EntryWidgetMixin",
+    "rei.ScreenOverlayImplMixin"
   ],
   "injectors": {
     "defaultRequire": 1

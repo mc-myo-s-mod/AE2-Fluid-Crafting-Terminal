@@ -33,7 +33,8 @@
     "jei.JeiFocusInputHandlerMixin",
     "rei.ReiUseCraftingRecipeTransferMixin",
     "rei.ScreenOverlayImplMixin",
-    "rei.EntryWidgetMixin"
+    "rei.EntryWidgetMixin",
+    "jei.et.ETJeiRecipeTransferMixin"
   ],
   "injectors": {
     "defaultRequire": 1

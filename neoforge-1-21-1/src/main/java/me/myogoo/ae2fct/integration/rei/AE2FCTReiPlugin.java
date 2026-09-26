@@ -20,7 +20,6 @@ import me.shedaniel.rei.api.common.util.EntryIngredients;
 import me.shedaniel.rei.api.common.util.EntryStacks;
 import me.shedaniel.rei.forge.REIPluginClient;
 import net.minecraft.network.chat.Component;
-import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.CraftingRecipe;
 import net.minecraft.world.item.crafting.RecipeHolder;
 
@@ -87,7 +86,7 @@ public final class AE2FCTReiPlugin implements REIClientPlugin {
 
         @Override
         public Renderer getIcon() {
-            return EntryStacks.of(Items.WATER_BUCKET);
+            return EntryStacks.of(AE2FCTItems.TERMINAL_FLUID_INTERACT_CARD.get());
         }
 
         @Override

@@ -24,6 +24,8 @@ import appeng.helpers.InventoryAction;
 import appeng.menu.ISubMenu;
 import appeng.menu.SlotSemantics;
 import appeng.menu.locator.MenuLocators;
+import appeng.menu.me.common.GridInventoryEntry;
+import appeng.menu.me.common.IClientRepo;
 import appeng.menu.me.items.CraftingTermMenu;
 import appeng.menu.me.items.PatternEncodingTermMenu;
 import appeng.menu.slot.CraftingTermSlot;
@@ -34,6 +36,7 @@ import dev.shadowsoffire.fastsuite.CachedRecipeList;
 import me.myogoo.ae2fct.api.IMEStorageMenu;
 import me.myogoo.ae2fct.config.FluidCraftingConfig;
 import me.myogoo.ae2fct.integration.BlacklistRecipe;
+import me.myogoo.ae2fct.integration.FluidCraftingTerminalIntegration;
 import net.minecraft.core.Holder;
 import net.minecraft.core.NonNullList;
 import net.minecraft.core.registries.Registries;
@@ -80,13 +83,16 @@ import me.myogoo.ae2fct.codec.VirtualFluid;
 import me.myogoo.ae2fct.init.AE2FCTDataComponent;
 import me.myogoo.ae2fct.item.VirtualFluidItem;
 import me.myogoo.ae2fct.util.FluidCraftingHelper;
+import me.myogoo.ae2fct.util.VirtualFluidRecipePolicy;
 import net.neoforged.neoforge.fluids.FluidStack;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.function.Consumer;
 
 @Mod("ae2fct_gametest")
@@ -280,6 +286,11 @@ public final class Ae2fctGameTestMod {
             assertTrue(helper, !waterComponent.equals(new VirtualFluid(new FluidStack(Fluids.WATER, 1000), 2000)),
                     "different capacities are not equal");
             assertTrue(helper, waterBucket.test(waterVirtual), "water virtual item matches water bucket ingredient");
+            ItemStack undersizedWater = waterVirtual.copy();
+            undersizedWater.set(AE2FCTDataComponent.VIRTUAL_FLUID,
+                    new VirtualFluid(new FluidStack(Fluids.WATER, FluidType.BUCKET_VOLUME - 1), FluidType.BUCKET_VOLUME));
+            assertTrue(helper, !waterBucket.test(undersizedWater),
+                    "a 999 mB virtual fluid does not match a full-bucket ingredient");
             assertTrue(helper, !waterBucket.test(lavaVirtual),
                     "lava virtual item does not match water bucket ingredient");
 
@@ -343,6 +354,7 @@ public final class Ae2fctGameTestMod {
             assertTrue(helper, Ingredient.of(Items.WATER_BUCKET).test(new ItemStack(Items.WATER_BUCKET)),
                     "blacklisted transfer still accepts real buckets");
             FluidCraftingHelper.clearFluidCraftingEnabled();
+            assertTransferPreviewFluidRepoPolicy(helper, level, Ingredient.of(Items.WATER_BUCKET));
             assertEquals(helper, null, findCraftingRecipe(level, virtualWater, new ItemStack(Items.STICK)),
                     "listed recipe with virtual bucket fails via recipe manager");
             assertRecipe(helper, BLACKLISTED_RECIPE,
@@ -528,6 +540,10 @@ public final class Ae2fctGameTestMod {
                     "cached crafting terminal recipe must not bypass blacklist on pickup");
             assertTrue(helper, FluidCraftingHelper.isVirtualFluidItem(menu.getCraftingMatrix().getStackInSlot(0)),
                     "blocked cached crafting terminal recipe must not consume virtual fluid input");
+            menu.getSlots(SlotSemantics.CRAFTING_GRID).getFirst().set(ItemStack.EMPTY);
+            menu.getSlots(SlotSemantics.CRAFTING_GRID).getFirst().set(virtualWater.copy());
+            assertTrue(helper, output.getItem().isEmpty(),
+                    "blacklisted virtual-bucket recipe must hide the crafting output");
 
             CraftingTermMenu realBucketMenu = new CraftingTermMenu(5, player.getInventory(),
                     new TestPatternHost(player, level)) {
@@ -548,6 +564,10 @@ public final class Ae2fctGameTestMod {
                     (CraftingTermSlot) realBucketMenu.getSlots(SlotSemantics.CRAFTING_RESULT).getFirst();
             assertEquals(helper, expectedRealBucketOutput.getItem(), realBucketOutput.getItem().getItem(),
                     "blacklisted crafting terminal recipe still shows real bucket output");
+            realBucketMenu.getSlots(SlotSemantics.CRAFTING_GRID).getFirst().set(virtualWater.copy());
+            assertTrue(helper, realBucketOutput.getItem().isEmpty(),
+                    "replacing a real bucket with virtual fluid must clear the cached output");
+            realBucketMenu.getSlots(SlotSemantics.CRAFTING_GRID).getFirst().set(realWaterBucket.copy());
             realBucketOutput.doClick(InventoryAction.PICKUP_OR_SET_DOWN, player);
             assertEquals(helper, expectedRealBucketOutput.getItem(), realBucketMenu.getCarried().getItem(),
                     "blacklisted crafting terminal recipe still crafts with a real bucket");
@@ -588,6 +608,93 @@ public final class Ae2fctGameTestMod {
             entries.add(recipeId.toString());
         }
         FluidCraftingConfig.COMMON.virtualFluidRecipeBlacklist.set(entries);
+    }
+
+    private static void assertTransferPreviewFluidRepoPolicy(GameTestHelper helper, Level level, Ingredient waterBucket) {
+        Player player = FakePlayerFactory.getMinecraft((ServerLevel) level);
+        CraftingTermMenu menu = createCraftingMenu(player, level);
+        IClientRepo storedWater = clientRepo(new GridInventoryEntry(1, AEFluidKey.of(Fluids.WATER),
+                AEFluidKey.AMOUNT_BUCKET, 0, false));
+        IClientRepo craftableWater = clientRepo(new GridInventoryEntry(2, AEFluidKey.of(Fluids.WATER),
+                0, AEFluidKey.AMOUNT_BUCKET, true));
+
+        var blockedStored = VirtualFluidRecipePolicy.withRecipe(menu, BLACKLISTED_RECIPE,
+                () -> FluidCraftingHelper.checkFluidAvailabilityInClientRepo(waterBucket, storedWater, level));
+        assertTrue(helper, !blockedStored.available(),
+                "blacklisted transfer preview must leave stored fluid bucket ingredient missing");
+        assertTrue(helper, !blockedStored.craftable(),
+                "blacklisted transfer preview must not mark stored fluid bucket ingredient craftable");
+        var blockedCraftable = VirtualFluidRecipePolicy.withRecipe(menu, BLACKLISTED_RECIPE,
+                () -> FluidCraftingHelper.checkFluidAvailabilityInClientRepo(waterBucket, craftableWater, level));
+        assertTrue(helper, !blockedCraftable.available(),
+                "blacklisted transfer preview must leave craftable fluid bucket ingredient missing");
+        assertTrue(helper, !blockedCraftable.craftable(),
+                "blacklisted transfer preview must not promote craftable fluid to bucket craftable");
+
+        setVirtualFluidRecipeBlacklist();
+        var allowedStored = VirtualFluidRecipePolicy.withRecipe(menu, BLACKLISTED_RECIPE,
+                () -> FluidCraftingHelper.checkFluidAvailabilityInClientRepo(waterBucket, storedWater, level));
+        assertTrue(helper, allowedStored.available(),
+                "unlisted transfer preview may satisfy bucket ingredient from stored fluid");
+        var allowedCraftable = VirtualFluidRecipePolicy.withRecipe(menu, BLACKLISTED_RECIPE,
+                () -> FluidCraftingHelper.checkFluidAvailabilityInClientRepo(waterBucket, craftableWater, level));
+        assertTrue(helper, allowedCraftable.craftable(),
+                "unlisted transfer preview may mark bucket ingredient craftable from fluid autocrafting");
+
+        boolean previousQoL = FluidCraftingConfig.COMMON.QoL.get();
+        try {
+            FluidCraftingConfig.COMMON.QoL.set(true);
+            Map<Integer, Ingredient> ingredients = Map.of(0, waterBucket);
+            var missing = new CraftingTermMenu.MissingIngredientSlots(Set.of(0), Set.of());
+
+            setVirtualFluidRecipeBlacklist(BLACKLISTED_RECIPE_ID, BLACKLISTED_OVERLAP_RECIPE_ID);
+            menu.setClientRepo(storedWater);
+            var blockedResult = VirtualFluidRecipePolicy.withRecipe(menu, BLACKLISTED_RECIPE,
+                    () -> FluidCraftingTerminalIntegration.resolveMissingIngredients(menu, missing, ingredients));
+            assertTrue(helper, blockedResult.missingSlots().contains(0),
+                    "blacklisted ET preview must keep the fluid ingredient missing");
+
+            setVirtualFluidRecipeBlacklist();
+            menu.setClientRepo(storedWater);
+            var availableResult = VirtualFluidRecipePolicy.withRecipe(menu, BLACKLISTED_RECIPE,
+                    () -> FluidCraftingTerminalIntegration.resolveMissingIngredients(menu, missing, ingredients));
+            assertTrue(helper, availableResult.missingSlots().isEmpty(),
+                    "stored fluid must remove the ET preview missing slot");
+
+            menu.setClientRepo(craftableWater);
+            var craftableResult = VirtualFluidRecipePolicy.withRecipe(menu, BLACKLISTED_RECIPE,
+                    () -> FluidCraftingTerminalIntegration.resolveMissingIngredients(menu, missing, ingredients));
+            assertTrue(helper, craftableResult.missingSlots().isEmpty()
+                            && craftableResult.craftableSlots().contains(0),
+                    "craftable fluid must promote the ET preview slot to craftable");
+
+            menu.setClientRepo(storedWater);
+            assertTrue(helper, FluidCraftingTerminalIntegration.resolveMissingIngredients(menu, missing, ingredients)
+                            == missing,
+                    "ET preview without recipe context must leave missing slots unchanged");
+
+            FluidCraftingConfig.COMMON.QoL.set(false);
+            var withoutUpgrade = VirtualFluidRecipePolicy.withRecipe(menu, BLACKLISTED_RECIPE,
+                    () -> FluidCraftingTerminalIntegration.resolveMissingIngredients(menu, missing, ingredients));
+            assertTrue(helper, withoutUpgrade == missing,
+                    "ET preview without the fluid upgrade must leave missing slots unchanged");
+        } finally {
+            FluidCraftingConfig.COMMON.QoL.set(previousQoL);
+            setVirtualFluidRecipeBlacklist(BLACKLISTED_RECIPE_ID, BLACKLISTED_OVERLAP_RECIPE_ID);
+        }
+    }
+
+    private static CraftingTermMenu createCraftingMenu(Player player, Level level) {
+        return new CraftingTermMenu(6, player.getInventory(), new TestPatternHost(player, level)) {
+            @Override
+            public void broadcastChanges() {
+                // This mock connection has no AE2 payload negotiation; exercise preview behavior without network sends.
+            }
+        };
+    }
+
+    private static IClientRepo clientRepo(GridInventoryEntry entry) {
+        return new TestClientRepo(Set.of(entry));
     }
 
     private static PatternEncodingTermMenu createPatternMenu(GameTestHelper helper, Level level) {
@@ -678,6 +785,22 @@ public final class Ae2fctGameTestMod {
         @Override
         public double extractAEPower(double amount, Actionable mode, PowerMultiplier usePowerMultiplier) {
             return amount;
+        }
+    }
+
+    private record TestClientRepo(Set<GridInventoryEntry> entries) implements IClientRepo {
+        @Override
+        public void handleUpdate(boolean fullUpdate, List<GridInventoryEntry> entries) {
+        }
+
+        @Override
+        public Set<GridInventoryEntry> getAllEntries() {
+            return entries;
+        }
+
+        @Override
+        public Collection<GridInventoryEntry> getByIngredient(Ingredient ingredient) {
+            return List.of();
         }
     }
 

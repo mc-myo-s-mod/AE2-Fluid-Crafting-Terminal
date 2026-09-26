@@ -258,6 +258,10 @@ public class FluidCraftingHelper {
 
     public static boolean hasAvailableFluidInClientRepo(Ingredient ingredient, IClientRepo clientRepo,
             long requiredAmount) {
+        if (!isRecipePreviewAllowed()) {
+            return false;
+        }
+
         if (clientRepo == null) {
             return false;
         }
@@ -288,6 +292,10 @@ public class FluidCraftingHelper {
     }
 
     public static boolean isFluidCraftableInClientRepo(Ingredient ingredient, IClientRepo clientRepo) {
+        if (!isRecipePreviewAllowed()) {
+            return false;
+        }
+
         if (clientRepo == null) {
             return false;
         }
