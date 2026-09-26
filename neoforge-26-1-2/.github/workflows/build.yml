@@ -1,0 +1,78 @@
+name: Build Mod
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    outputs:
+      artifact_name: ${{ steps.vars.outputs.artifact_name }}
+      artifact_path: ${{ steps.vars.outputs.artifact_path }}
+      mc_version: ${{ steps.vars.outputs.mc_version }}
+      mod_version: ${{ steps.vars.outputs.mod_version }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Read variables from gradle.properties
+        id: vars
+        shell: bash
+        run: |
+          set -euo pipefail
+          java_version=$(grep '^java_version=' gradle.properties | cut -d'=' -f2 | tr -d ' \r')
+          echo "java_version=$java_version" >> "$GITHUB_OUTPUT"
+          mc_version=$(grep '^minecraft_version=' gradle.properties | cut -d'=' -f2 | tr -d ' \r')
+          echo "mc_version=$mc_version" >> "$GITHUB_OUTPUT"
+          mod_version=$(grep '^mod_version=' gradle.properties | cut -d'=' -f2 | tr -d ' \r')
+          echo "mod_version=$mod_version" >> "$GITHUB_OUTPUT"
+          echo "artifact_path=build/libs/AE2-Fluid-Crafting-Terminal-$mc_version-$mod_version.jar" >> "$GITHUB_OUTPUT"
+          echo "artifact_name=AE2-Fluid-Crafting-Terminal-$mc_version-$mod_version" >> "$GITHUB_OUTPUT"
+
+      - name: Set up Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: ${{ steps.vars.outputs.java_version }}
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v6
+        with:
+          cache-provider: basic
+
+      - name: Make Gradle wrapper executable
+        run: chmod +x ./gradlew
+
+      - name: Generate data
+        run: |
+          ./gradlew runData \
+            --build-cache \
+            --no-daemon \
+            --console=plain
+
+      - name: Run GameTests
+        run: |
+          ./gradlew runGameTestServer \
+            --build-cache \
+            --no-daemon \
+            --console=plain
+
+      - name: Build with Gradle
+        run: |
+          ./gradlew build \
+            --build-cache \
+            --no-daemon \
+            --console=plain
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ steps.vars.outputs.artifact_name }}
+          path: ${{ steps.vars.outputs.artifact_path }}
+          if-no-files-found: error
