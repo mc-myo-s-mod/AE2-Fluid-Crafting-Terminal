@@ -33,6 +33,7 @@ import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.common.util.FakePlayer;
 import net.minecraft.world.level.material.Fluids;
+import net.minecraftforge.gametest.PrefixGameTestTemplate;
 
 import java.util.List;
 import java.util.HashMap;
@@ -41,8 +42,7 @@ import java.util.Set;
 
 import static net.minecraft.world.item.Items.CRAFTING_TABLE;
 
-@net.minecraftforge.gametest.GameTestHolder(Ae2fct.MODID)
-@net.minecraftforge.gametest.PrefixGameTestTemplate(false)
+@PrefixGameTestTemplate(false)
 public final class EtJeiPreviewGameTests {
     private static final ResourceLocation ALLOWED_RECIPE = Ae2fct.makeId("et_jei_preview_allowed");
     private static final ResourceLocation BLOCKED_RECIPE = Ae2fct.makeId("et_jei_preview_blocked");
