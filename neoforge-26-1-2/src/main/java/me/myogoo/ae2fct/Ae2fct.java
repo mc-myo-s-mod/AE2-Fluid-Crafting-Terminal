@@ -20,6 +20,9 @@ public class Ae2fct {
         AE2FCTConfig.initialize(modContainer);
         AE2FCTDataComponent.REGISTER.register(modEventBus);
         AE2FCTItems.REGISTER.register(modEventBus);
+        modEventBus.addListener((net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent event) ->
+                event.enqueueWork(() -> appeng.api.networking.GridServices.register(
+                        me.myogoo.ae2fct.storage.FluidRemainderService.class, me.myogoo.ae2fct.storage.FluidRemainderService.class)));
         modEventBus.addListener(Ae2fct::registerCapabilities);
     }
 

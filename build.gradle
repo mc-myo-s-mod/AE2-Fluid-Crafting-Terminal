@@ -102,6 +102,7 @@ configure(project(':common')) {
 }
 
 configure(modProjects) {
+    apply from: rootProject.file('gradle/verify-viewer.gradle')
     def commonJavaSourceDir = rootProject.layout.projectDirectory.dir('common/src/main/java').asFile
     def commonResourcesSourceDir = rootProject.layout.projectDirectory.dir('common/src/main/resources').asFile
     def loaderResourceDirs = [file('src/main/resources'), file('src/generated/resources')]
@@ -110,6 +111,7 @@ configure(modProjects) {
 
     def syncAE2FCTCommonJava = tasks.register('syncAE2FCTCommonJava', Sync) {
         from commonJavaSourceDir
+        if (project.name == 'neoforge-1-21-1') from rootProject.file('common/src/neoforge/java')
         into generatedCommonJavaDir
     }
 
@@ -141,6 +143,8 @@ configure(modProjects) {
     tasks.named('compileJava').configure {
         dependsOn syncAE2FCTCommonJava
     }
+
+    tasks.named('check') { dependsOn ':common:check' }
 
     tasks.named('processResources').configure {
         dependsOn syncAE2FCTCommonResources

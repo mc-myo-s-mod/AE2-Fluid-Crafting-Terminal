@@ -3,8 +3,10 @@ def isWindows = System.getProperty('os.name').toLowerCase(Locale.ROOT).contains(
 def wrapper = isWindows ? ['cmd', '/d', '/c', 'gradlew.bat'] : ['sh', './gradlew']
 def forwardedProperties = gradle.startParameter.projectProperties.collect { key, value -> "-P${key}=${value}".toString() }
 def forwardedFlags = gradle.startParameter.offline ? ['--offline'] : []
+forwardedFlags += ["--max-workers=${gradle.startParameter.maxWorkerCount}".toString()]
+forwardedFlags += gradle.startParameter.initScripts.collectMany { ['--init-script', it.absolutePath] }
 
-['clean', 'assemble', 'build', 'check', 'compileJava', 'test',
+['clean', 'assemble', 'build', 'check', 'compileJava', 'compileGameTestJava', 'test', 'verifyViewerClasspath',
  'runData', 'runClient', 'runServer', 'runGameTestServer', 'runRenderTestClient',
  'neoForgeIdeSync'].each { taskName ->
     tasks.register(taskName, Exec) {

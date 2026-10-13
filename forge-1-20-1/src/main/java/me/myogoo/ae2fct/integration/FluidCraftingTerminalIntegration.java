@@ -194,11 +194,7 @@ public final class FluidCraftingTerminalIntegration {
             }
 
             var availability = FluidCraftingHelper.checkFluidAvailabilityInClientRepo(ingredient, clientRepo);
-            if (availability.available()) {
-                newMissing.remove(slot);
-                newCraftable.remove(slot);
-                changed = true;
-            } else if (availability.craftable() && newMissing.contains(slot)) {
+            if (availability.craftable() && newMissing.contains(slot)) {
                 newMissing.remove(slot);
                 newCraftable.add(slot);
                 changed = true;
@@ -212,11 +208,24 @@ public final class FluidCraftingTerminalIntegration {
         return new CraftingTermMenu.MissingIngredientSlots(newMissing, newCraftable);
     }
 
+    /**
+     * @deprecated Use {@link #hasFluidIngredient(Ingredient, IClientRepo, Map)} with one shared
+     * reservation map across all slots in a preview. This legacy query checks one bucket independently.
+     */
+    @Deprecated(forRemoval = true)
     public static boolean hasFluidIngredient(Ingredient ingredient, IClientRepo clientRepo) {
         if (!canResolveRecipeViewerFluidIngredients()) {
             return false;
         }
         return FluidCraftingHelper.hasAvailableFluidInClientRepo(ingredient, clientRepo, AEFluidKey.AMOUNT_BUCKET);
+    }
+
+    public static boolean hasFluidIngredient(Ingredient ingredient, IClientRepo clientRepo,
+            Map<Object, Integer> reservedAmounts) {
+        if (!canResolveRecipeViewerFluidIngredients()) {
+            return false;
+        }
+        return FluidCraftingHelper.reserveAvailableFluidInClientRepo(ingredient, clientRepo, AEFluidKey.AMOUNT_BUCKET, reservedAmounts);
     }
 
     public static boolean isFluidCraftable(ItemStack itemStack, IClientRepo clientRepo) {
@@ -253,6 +262,11 @@ public final class FluidCraftingTerminalIntegration {
         return FluidCraftingHelper.findCraftableFluidItemKey(ingredient, craftingService);
     }
 
+    /**
+     * @deprecated Use {@link FluidCraftingHelper#checkFluidAvailabilityInClientRepo} for ingredient previews.
+     * This legacy query retains its exact-key, one-bucket and viewer-policy checks.
+     */
+    @Deprecated(forRemoval = true)
     public static boolean clientRepoHasFluid(IClientRepo clientRepo, AEFluidKey fluidKey) {
         if (clientRepo == null || !canResolveRecipeViewerFluidIngredients()) {
             return false;

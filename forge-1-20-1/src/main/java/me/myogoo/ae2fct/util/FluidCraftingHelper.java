@@ -37,6 +37,7 @@ public final class FluidCraftingHelper {
                 }
             });
         }
+        fluids.removeIf(fluid -> !ingredient.test(VirtualFluidItem.createItemStack(fluid)));
         return fluids;
     }
 
@@ -78,6 +79,11 @@ public final class FluidCraftingHelper {
 
     public static boolean hasAvailableFluidInClientRepo(Ingredient ingredient, IClientRepo clientRepo,
             long requiredAmount) {
+        return reserveAvailableFluidInClientRepo(ingredient, clientRepo, requiredAmount, null);
+    }
+
+    public static boolean reserveAvailableFluidInClientRepo(Ingredient ingredient, IClientRepo clientRepo,
+            long requiredAmount, java.util.Map<Object, Integer> reservedAmounts) {
         if (clientRepo == null) {
             return false;
         }
@@ -92,13 +98,14 @@ public final class FluidCraftingHelper {
                 continue;
             }
 
-            if (entry.getStoredAmount() < requiredAmount) {
+            if (entry.getStoredAmount() - (reservedAmounts == null ? 0 : reservedAmounts.getOrDefault(entryFluidKey, 0)) < requiredAmount) {
                 continue;
             }
 
             for (Fluid fluid : fluids) {
                 AEFluidKey fluidKey = AEFluidKey.of(fluid);
                 if (fluidKey != null && entryFluidKey.equals(fluidKey)) {
+                    if (reservedAmounts != null) reservedAmounts.merge(entryFluidKey, Math.toIntExact(requiredAmount), Integer::sum);
                     return true;
                 }
             }

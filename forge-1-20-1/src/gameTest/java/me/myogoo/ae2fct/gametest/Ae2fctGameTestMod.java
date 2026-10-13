@@ -14,6 +14,10 @@ public final class Ae2fctGameTestMod {
     }
 
     private static void register(RegisterGameTestsEvent event) {
+        if (System.getProperty("ae2fct.persistenceSmoke") != null) {
+            event.register(PersistentWorldGameTest.class);
+            return;
+        }
         event.register(Ae2fctGameTests.class);
         if (net.minecraftforge.fml.ModList.get().isLoaded("extendedterminal")) {
             event.register(EtJeiPreviewGameTests.class);

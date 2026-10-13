@@ -10,6 +10,8 @@ public final class VirtualFluidStorage {
     private VirtualFluidStorage() {
     }
 
+    /** @deprecated Use {@link #get(ItemStack)} and check for a non-null stored fluid. */
+    @Deprecated(forRemoval = true)
     public static boolean has(ItemStack stack) {
         return get(stack) != null;
     }

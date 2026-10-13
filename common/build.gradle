@@ -1,0 +1,18 @@
+apply plugin: 'java'
+
+sourceSets {
+    check {
+        compileClasspath += sourceSets.main.output
+        runtimeClasspath += sourceSets.main.output
+    }
+}
+
+tasks.register('accountingCheck', JavaExec) {
+    dependsOn tasks.named('checkClasses')
+    classpath = sourceSets.check.runtimeClasspath
+    mainClass = 'me.myogoo.ae2fct.storage.FluidAccountingCheck'
+}
+
+tasks.named('check') {
+    dependsOn tasks.named('accountingCheck')
+}

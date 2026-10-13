@@ -45,6 +45,9 @@ public final class Plugin implements IMixinConfigPlugin {
         if (mixinClassName.contains(".ie.")) {
             return isLoaded("immersiveengineering");
         }
+        if (mixinClassName.contains(".mgu.")) {
+            return isLoaded("mob_grinding_utils");
+        }
         if (mixinClassName.contains(".fastsuite.")) {
             return isLoaded("fastsuite");
         }

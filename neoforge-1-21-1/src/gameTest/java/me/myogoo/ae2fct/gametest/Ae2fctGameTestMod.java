@@ -13,5 +13,8 @@ public final class Ae2fctGameTestMod {
 
     private static void registerGameTests(RegisterGameTestsEvent event) {
         event.register(VirtualFluidRecipePolicyGameTest.class);
+        if (System.getProperty("ae2fct.persistenceSmoke") != null) {
+            event.register(PersistentWorldGameTest.class);
+        }
     }
 }

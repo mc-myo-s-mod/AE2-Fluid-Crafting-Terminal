@@ -157,6 +157,10 @@ dependencies {
     if (project.hasProperty('ae2fctIeTests')) {
         runtimeOnly fg.deobf("maven.modrinth:immersiveengineering:10.2.0-183")
     }
+    compileOnly fg.deobf("curse.maven:mob-grinding-utils-254241:5131447")
+    if (project.hasProperty('ae2fctMguTests')) {
+        runtimeOnly fg.deobf("curse.maven:mob-grinding-utils-254241:5131447")
+    }
 
     compileOnly "io.github.llamalad7:mixinextras-common:0.5.0"
 
@@ -171,14 +175,23 @@ dependencies {
     compileOnly fg.deobf("me.shedaniel:RoughlyEnoughItems-forge:${REI_version}")
     compileOnly fg.deobf("me.shedaniel.cloth:cloth-config-forge:${cloth_config_version}")
     compileOnly fg.deobf("dev.architectury:architectury-forge:${architectury_version}")
-    if (project.findProperty('itemListMod') == 'rei') {
-        runtimeOnly fg.deobf("me.shedaniel:RoughlyEnoughItems-forge:${REI_version}")
-        runtimeOnly fg.deobf("me.shedaniel.cloth:cloth-config-forge:${cloth_config_version}")
-        runtimeOnly fg.deobf("dev.architectury:architectury-forge:${architectury_version}")
-    } else {
-        runtimeOnly fg.deobf("mezz.jei:jei-${minecraft_version}-forge:${JEI_version}")
-        runtimeOnly fg.deobf("curse.maven:ae2-jei-integration-1074338:5748513")
-        runtimeOnly fg.deobf("dev.emi:emi-forge:${EMI_version}")
+    switch (providers.gradleProperty('itemListMod').getOrElse('emi')) {
+        case 'none':
+            break
+        case 'emi':
+            runtimeOnly fg.deobf("dev.emi:emi-forge:${EMI_version}")
+            break
+        case 'jei':
+            runtimeOnly fg.deobf("mezz.jei:jei-${minecraft_version}-forge:${JEI_version}")
+            runtimeOnly fg.deobf("curse.maven:ae2-jei-integration-1074338:5748513")
+            break
+        case 'rei':
+            runtimeOnly fg.deobf("me.shedaniel:RoughlyEnoughItems-forge:${REI_version}")
+            runtimeOnly fg.deobf("me.shedaniel.cloth:cloth-config-forge:${cloth_config_version}")
+            runtimeOnly fg.deobf("dev.architectury:architectury-forge:${architectury_version}")
+            break
+        default:
+            throw new GradleException('itemListMod must be none, jei, emi or rei')
     }
 
     if(project.enable_et == "true") {

@@ -53,8 +53,8 @@ public abstract class CraftingTermMenuMixin extends MEStorageMenu {
         }
 
         IClientRepo clientRepo = this.getClientRepo();
-        if (FluidCraftingHelper.hasAvailableFluidInClientRepo(ingredient, clientRepo, getPlayer().level(),
-                FluidType.BUCKET_VOLUME)) {
+        if (FluidCraftingHelper.reserveAvailableFluidInClientRepo(ingredient, clientRepo, getPlayer().level(),
+                FluidType.BUCKET_VOLUME, usedIngredients)) {
             cir.setReturnValue(true);
         }
     }

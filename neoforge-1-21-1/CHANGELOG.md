@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased (Minecraft 1.21.1)
+
+### Fixes
+- Do not offer virtual fluid for recipe transfer or missing-ingredient previews when the ingredient rejects the virtual bucket, including component-sensitive buckets.
+
 ## 19.1.2 (Minecraft 1.21.1)
 
 ### Fixes

@@ -37,6 +37,8 @@ Use either the root bridge or the native wrapper for 26.1.2. Do not run the root
 ./neoforge-26-1-2/gradlew --project-dir neoforge-26-1-2 build --console=plain
 ```
 
+The deprecated public fluid helpers remain callable. Forge `hasFluidIngredient(Ingredient, IClientRepo)` keeps its viewer-policy and one-bucket query; multi-slot previews should use the reservation-map overload and share the map. NeoForge `tryExtractFluidForIngredient` and `tryExtractFluidForTemplate` preserve template data and return the actual extracted fluid, including partial amounts; new callers should use `FluidStorageTransfer.extractToItem` with an exact key and inspect the amount.
+
 CI runs on pushes to `master`, pull requests targeting `master`, and manual dispatch. It builds all three Minecraft versions; AE2FCT GameTests are also required. New commits cancel superseded CI runs.
 
 To publish, merge the changes into `master`, create a tag `v<minecraft_version>-<mod_version>` matching that module's `gradle.properties`, then publish its GitHub Release. Pushing a tag alone does not publish. The workflow checks that the tag belongs to `master`, builds only the selected module, attaches the JAR to the release, and publishes to CurseForge and Modrinth using `CURSEFORGE_TOKEN` and `MODRINTH_TOKEN`. Mod and Myotus `-SNAPSHOT` versions are rejected. Forge builds produce a bundled release JAR with the normal filename and a separate `-dev.jar`; publish only the bundled release JAR.
