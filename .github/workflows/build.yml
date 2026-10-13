@@ -114,6 +114,12 @@ jobs:
             esac
             grep -Eq "All $persisted required tests passed" "persistence-$phase.log"
           done
+      - name: Diagnose failed server processes
+        if: failure()
+        run: |
+          for pid in $(jps -q); do
+            timeout 15s jcmd "$pid" Thread.print -l || true
+          done
       - uses: actions/upload-artifact@v7
         with:
           name: AE2FCT-${{ matrix.minecraft }}-et-${{ matrix.et }}-build
