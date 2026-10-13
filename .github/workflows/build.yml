@@ -94,8 +94,26 @@ jobs:
                 -Penable_et="$ENABLE_ET" -PitemListMod=jei
                 -I "$PWD/gradle/fct-ci.init.gradle"
                 --max-workers=2 --no-configuration-cache --no-daemon --console=plain)
-          # Dump JVM threads and fail if server shutdown stalls.
-          timeout --signal=QUIT --kill-after=30s 5m "$WRAPPER" "${args[@]}" | tee gametest.log
+          run_tests() {
+            local log="$1"
+            shift
+            # Capture the server JVM while it is alive, before timeout kills it.
+            (
+              trap 'kill $(jobs -pr) 2>/dev/null || true; exit 0' TERM INT
+              sleep 240 &
+              wait $!
+              for pid in $(jps -q); do
+                timeout 10s jcmd "$pid" Thread.print -l || true
+              done
+            ) > "${log%.log}-threads.log" 2>&1 &
+            local watchdog=$!
+            local result=0
+            timeout --signal=QUIT --kill-after=30s 5m "$WRAPPER" "${args[@]}" "$@" 2>&1 | tee "$log" || result=$?
+            kill "$watchdog" 2>/dev/null || true
+            wait "$watchdog" 2>/dev/null || true
+            return "$result"
+          }
+          run_tests gametest.log
           case "$MODULE" in
             forge-1-20-1) expected=16; [[ "$ENABLE_ET" == false ]] || expected=18 ;;
             neoforge-1-21-1) expected=18 ;;
@@ -106,7 +124,7 @@ jobs:
             grep -Fq 'FCT ET preview assertions passed' gametest.log
           fi
           for phase in write read; do
-            timeout --signal=QUIT --kill-after=30s 5m "$WRAPPER" "${args[@]}" -PfctPersistence="$phase" | tee "persistence-$phase.log"
+            run_tests "persistence-$phase.log" -PfctPersistence="$phase"
             case "$MODULE" in
               forge-1-20-1) persisted=1 ;;
               neoforge-1-21-1) persisted=19 ;;
@@ -114,12 +132,17 @@ jobs:
             esac
             grep -Eq "All $persisted required tests passed" "persistence-$phase.log"
           done
-      - name: Diagnose failed server processes
+      - name: Upload failed test diagnostics
         if: failure()
-        run: |
-          for pid in $(jps -q); do
-            timeout 15s jcmd "$pid" Thread.print -l || true
-          done
+        uses: actions/upload-artifact@v7
+        with:
+          name: AE2FCT-${{ matrix.minecraft }}-et-${{ matrix.et }}-diagnostics
+          path: |
+            gametest*.log
+            persistence-*.log
+            ${{ matrix.module }}/run-ci/**/logs/
+            ${{ matrix.module }}/run-ci/**/crash-reports/
+          if-no-files-found: ignore
       - uses: actions/upload-artifact@v7
         with:
           name: AE2FCT-${{ matrix.minecraft }}-et-${{ matrix.et }}-build
