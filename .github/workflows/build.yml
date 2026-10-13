@@ -94,7 +94,8 @@ jobs:
                 -Penable_et="$ENABLE_ET" -PitemListMod=jei
                 -I "$PWD/gradle/fct-ci.init.gradle"
                 --max-workers=2 --no-configuration-cache --no-daemon --console=plain)
-          "$WRAPPER" "${args[@]}" | tee gametest.log
+          # Dump JVM threads and fail if server shutdown stalls.
+          timeout --signal=QUIT --kill-after=30s 5m "$WRAPPER" "${args[@]}" | tee gametest.log
           case "$MODULE" in
             forge-1-20-1) expected=16; [[ "$ENABLE_ET" == false ]] || expected=18 ;;
             neoforge-1-21-1) expected=18 ;;
@@ -105,7 +106,7 @@ jobs:
             grep -Fq 'FCT ET preview assertions passed' gametest.log
           fi
           for phase in write read; do
-            "$WRAPPER" "${args[@]}" -PfctPersistence="$phase" | tee "persistence-$phase.log"
+            timeout --signal=QUIT --kill-after=30s 5m "$WRAPPER" "${args[@]}" -PfctPersistence="$phase" | tee "persistence-$phase.log"
             case "$MODULE" in
               forge-1-20-1) persisted=1 ;;
               neoforge-1-21-1) persisted=19 ;;
