@@ -159,7 +159,6 @@ sourceSets.main.resources { srcDir 'src/generated/resources' }
 
 dependencies {
     implementation "org.appliedenergistics:appliedenergistics2:${AE2_version}"
-    implementation "de.mari_023:ae2wtlib_api:${AE2WTLib_version}"
     implementation "me.myogoo:myotus:${Myotus_version}"
 
     compileOnly "maven.modrinth:extended-terminal:1.21.1-${ET_version}"
@@ -171,9 +170,10 @@ dependencies {
     runtimeOnly "org.appliedenergistics:guideme:${guideme_version}"
 
     switch (providers.gradleProperty('itemListMod').getOrElse('emi')) {
+        case 'none':
+            break
         case 'emi':
             runtimeOnly "dev.emi:emi-neoforge:${EMI_version}"
-            runtimeOnly "mezz.jei:jei-${minecraft_version}-neoforge:${JEI_version}"
             break
         case 'jei':
             runtimeOnly "mezz.jei:jei-${minecraft_version}-neoforge:${JEI_version}"
@@ -181,6 +181,8 @@ dependencies {
         case 'rei':
             runtimeOnly "me.shedaniel:RoughlyEnoughItems-neoforge:${REI_version}"
             break
+        default:
+            throw new GradleException('itemListMod must be none, jei, emi or rei')
     }
 
     runtimeOnly "maven.modrinth:immersiveengineering:12.4.2-194"

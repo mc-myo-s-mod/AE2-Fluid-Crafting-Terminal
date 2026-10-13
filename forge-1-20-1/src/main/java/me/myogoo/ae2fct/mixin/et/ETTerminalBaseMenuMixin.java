@@ -50,7 +50,7 @@ public abstract class ETTerminalBaseMenuMixin extends MEStorageMenu {
         }
 
         IClientRepo clientRepo = this.getClientRepo();
-        if (FluidCraftingTerminalIntegration.hasFluidIngredient(ingredient, clientRepo)) {
+        if (FluidCraftingTerminalIntegration.hasFluidIngredient(ingredient, clientRepo, usedIngredients)) {
             cir.setReturnValue(true);
         }
     }

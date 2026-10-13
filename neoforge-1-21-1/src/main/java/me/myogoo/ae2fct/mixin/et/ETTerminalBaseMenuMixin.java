@@ -15,9 +15,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 
 @Pseudo
 @Mixin(targets = "me.myogoo.extendedterminal.menu.ETTerminalBaseMenu", remap = false)
@@ -40,46 +38,9 @@ public abstract class ETTerminalBaseMenuMixin extends MEStorageMenu {
         }
 
         var result = cir.getReturnValue();
-        if (!result.anyMissingOrCraftable()) {
-            return;
-        }
-
-        IClientRepo clientRepo = this.getClientRepo();
-        if (clientRepo == null) {
-            return;
-        }
-
-        Set<Integer> newMissing = new HashSet<>(result.missingSlots());
-        Set<Integer> newCraftable = new HashSet<>(result.craftableSlots());
-        Set<Integer> slotsToCheck = new HashSet<>();
-        boolean changed = false;
-
-        slotsToCheck.addAll(result.missingSlots());
-        slotsToCheck.addAll(result.craftableSlots());
-
-        for (int slot : slotsToCheck) {
-            Ingredient ingredient = ingredients.get(slot);
-            if (ingredient == null) {
-                continue;
-            }
-
-            var availability = FluidCraftingHelper.checkFluidAvailabilityInClientRepo(ingredient, clientRepo);
-            if (availability.available()) {
-                newMissing.remove(slot);
-                newCraftable.remove(slot);
-                changed = true;
-            } else if (availability.craftable() && newMissing.contains(slot)) {
-                newMissing.remove(slot);
-                newCraftable.add(slot);
-                changed = true;
-            }
-        }
-
-        if (changed) {
-            cir.setReturnValue(new CraftingTermMenu.MissingIngredientSlots(newMissing, newCraftable));
-        }
+        var updated = FluidCraftingTerminalIntegration.resolveMissingIngredients(this, ingredients, result);
+        if (updated != result) cir.setReturnValue(updated);
     }
-
     @Inject(method = "hasIngredient", at = @At("RETURN"), cancellable = true)
     private void ae2fct$hasFluidIngredient(Ingredient ingredient, Object2IntOpenHashMap<Object> usedIngredients,
             CallbackInfoReturnable<Boolean> cir) {
@@ -88,7 +49,7 @@ public abstract class ETTerminalBaseMenuMixin extends MEStorageMenu {
         }
 
         IClientRepo clientRepo = this.getClientRepo();
-        if (FluidCraftingHelper.hasAvailableFluidInClientRepo(ingredient, clientRepo, 1000)) {
+        if (FluidCraftingHelper.reserveAvailableFluidInClientRepo(ingredient, clientRepo, 1000, usedIngredients)) {
             cir.setReturnValue(true);
         }
     }

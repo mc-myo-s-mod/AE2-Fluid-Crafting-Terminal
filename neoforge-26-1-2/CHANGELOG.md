@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased (Minecraft 26.1.2)
+
+### Fixes
+- Do not offer virtual fluid for recipe transfer or missing-ingredient previews when the ingredient rejects the virtual bucket, including component-sensitive buckets.
+
 ## 26.0.0 (Minecraft 26.1.2)
 
 - Hide Extended Terminal crafting output when a blacklisted recipe uses virtual fluid, while keeping real-bucket recipes visible.

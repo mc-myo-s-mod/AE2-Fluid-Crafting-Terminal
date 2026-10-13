@@ -1,0 +1,29 @@
+import groovy.json.JsonOutput
+import java.security.MessageDigest
+
+tasks.register('verifyViewerClasspath') {
+    group = 'verification'
+    doLast {
+        def selected = providers.gradleProperty('itemListMod').getOrElse(project.name == 'neoforge-26-1-2' ? 'jei' : 'emi')
+        def artifacts = configurations.runtimeClasspath.resolvedConfiguration.resolvedArtifacts
+        def viewers = artifacts.collect { artifact ->
+            def id = artifact.moduleVersion.id
+            if (id.group == 'mezz.jei') return 'jei'
+            if (id.group == 'dev.emi') return 'emi'
+            if (id.group == 'me.shedaniel' && id.name.startsWith('RoughlyEnoughItems')) return 'rei'
+            return null
+        }.findAll { it != null }.toSet()
+        def expected = (selected == 'none' ? [] : [selected]).toSet()
+        if (viewers != expected) throw new GradleException("Viewer runtime mismatch: selected ${selected}, resolved ${viewers}")
+        def report = layout.buildDirectory.file('reports/viewer-classpath.json').get().asFile
+        report.parentFile.mkdirs()
+        report.text = JsonOutput.prettyPrint(JsonOutput.toJson([
+                project: projectDir.absolutePath, selected: selected, viewers: viewers.sort(),
+                artifacts: artifacts.collect { artifact -> [
+                        coordinate: artifact.moduleVersion.id.toString(), file: artifact.file.absolutePath,
+                        sha256: MessageDigest.getInstance('SHA-256').digest(artifact.file.bytes).encodeHex().toString()
+                ] }
+        ]))
+        logger.lifecycle("Verified viewer ${selected}: ${report}")
+    }
+}

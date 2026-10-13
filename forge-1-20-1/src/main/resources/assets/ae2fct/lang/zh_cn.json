@@ -4,5 +4,10 @@
   "gui.ae2fct.config.title": "AE2 流体合成终端",
   "gui.ae2fct.config.show_bucket_recipes": "虚拟流体显示桶配方",
   "gui.ae2fct.config.show_fluid_recipes": "虚拟流体显示流体配方",
-  "gui.ae2fct.config.show_ae2_fluid_key_bucket_recipes": "显示 AE2 流体的桶配方"
+  "gui.ae2fct.config.show_ae2_fluid_key_bucket_recipes": "显示 AE2 流体的桶配方",
+  "item.ae2fct.virtual_fluid_item": "虚拟流体",
+  "gui.ae2fct.category.virtual_fluid_blacklist": "虚拟流体黑名单",
+  "gui.ae2fct.category.virtual_fluid_blacklist.footer": "需要真实桶",
+  "gui.ae2fct.category.virtual_fluid_blacklist.tooltip": "显示本地 recipe_transfer.virtualFluidRecipeBlacklist 中的原始装满桶配方。终端遵循服务器策略。",
+  "emi.category.ae2fct.virtual_fluid_blacklist": "虚拟流体黑名单"
 }

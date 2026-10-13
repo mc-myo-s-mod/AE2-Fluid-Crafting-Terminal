@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased (Minecraft 1.20.1)
+
+### Fixes
+- Fixed virtual XP buckets not crafting Mob Grinding Utils chicken feed used to obtain rotten eggs. Fluid tags, bucket amounts, and the recipe blacklist remain enforced.
+- Require exactly 1000 mB for ordinary virtual-bucket ingredients.
+- Do not offer virtual fluid for recipe transfer or missing-ingredient previews when the ingredient rejects the virtual bucket, including NBT-sensitive buckets.
+
 ## 15.1.0 (Minecraft 1.20.1)
 
 ### Fixes

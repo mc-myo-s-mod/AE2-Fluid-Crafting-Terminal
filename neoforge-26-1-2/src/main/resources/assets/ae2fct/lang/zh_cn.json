@@ -4,5 +4,8 @@
   "gui.ae2fct.config.title": "AE2 流体合成终端",
   "gui.ae2fct.config.show_bucket_recipes": "虚拟流体显示桶配方",
   "gui.ae2fct.config.show_fluid_recipes": "虚拟流体显示流体配方",
-  "gui.ae2fct.config.show_ae2_fluid_key_bucket_recipes": "显示 AE2 流体的桶配方"
+  "gui.ae2fct.config.show_ae2_fluid_key_bucket_recipes": "显示 AE2 流体的桶配方",
+  "category.ae2fct.virtual_fluid_blacklist": "虚拟流体黑名单",
+  "category.ae2fct.virtual_fluid_blacklist.real_buckets": "需要真实桶",
+  "category.ae2fct.virtual_fluid_blacklist.local_config": "使用此客户端的 ae2fct-common.toml。实际合成由服务器设置控制。"
 }

@@ -1,0 +1,25 @@
+gradle.afterProject { p, state ->
+    if (state.failure != null) return
+    if (p.plugins.hasPlugin('net.neoforged.moddev')) {
+        p.neoForge.runs.configureEach { run ->
+            if (run.name == 'gameTestServer') {
+                run.gameDirectory = p.file(p.hasProperty('fctPersistence') ? 'run-ci/persistence' : 'run-ci/gameTest')
+                if (p.hasProperty('fctPersistence')) run.systemProperty 'ae2fct.persistenceSmoke', p.property('fctPersistence')
+            }
+        }
+    }
+    if (p.plugins.hasPlugin('net.minecraftforge.gradle')) {
+        p.minecraft.runs.configureEach { run ->
+            if (run.name == 'gameTestServer') {
+                run.workingDirectory p.file(p.hasProperty('fctPersistence') ? 'run-ci/persistence' : 'run-ci/gameTest')
+                // Forge uses server.properties for terrain; the remote persistence fixture needs air.
+                def properties = new File(run.workingDirectory, 'server.properties')
+                if (!properties.exists()) {
+                    properties.parentFile.mkdirs()
+                    properties.setText('level-type=minecraft:flat\ngenerate-structures=false\n', 'UTF-8')
+                }
+                if (p.hasProperty('fctPersistence')) run.property 'ae2fct.persistenceSmoke', p.property('fctPersistence')
+            }
+        }
+    }
+}

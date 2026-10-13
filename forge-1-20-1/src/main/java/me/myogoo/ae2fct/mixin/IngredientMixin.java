@@ -6,6 +6,8 @@ import me.myogoo.ae2fct.init.AE2FCTItems;
 import me.myogoo.ae2fct.util.VirtualFluidStorage;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Ingredient;
+import net.minecraftforge.fluids.FluidType;
+import net.minecraftforge.fluids.FluidUtil;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -25,11 +27,12 @@ public abstract class IngredientMixin {
         }
 
         VirtualFluid virtualFluid = VirtualFluidStorage.get(stack);
-        if (virtualFluid == null || virtualFluid.fluid().isEmpty()) {
+        if (virtualFluid == null || virtualFluid.fluid().isEmpty()
+                || virtualFluid.fluid().getAmount() != FluidType.BUCKET_VOLUME) {
             return;
         }
 
-        ItemStack virtualBucket = new ItemStack(virtualFluid.fluid().getFluid().getBucket());
+        ItemStack virtualBucket = FluidUtil.getFilledBucket(virtualFluid.fluid());
         if (virtualBucket.isEmpty() || virtualBucket.getItem() == stack.getItem()) {
             return;
         }

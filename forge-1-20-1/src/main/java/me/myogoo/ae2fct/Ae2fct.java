@@ -21,6 +21,8 @@ public class Ae2fct {
 
     private void setup(final FMLCommonSetupEvent event) {
         event.enqueueWork(AE2FCTItems::registerCreativeTabItems);
+        event.enqueueWork(() -> appeng.api.networking.GridServices.register(
+                me.myogoo.ae2fct.storage.FluidRemainderService.class, me.myogoo.ae2fct.storage.FluidRemainderService.class));
     }
 
     public static ResourceLocation makeId(String path) {

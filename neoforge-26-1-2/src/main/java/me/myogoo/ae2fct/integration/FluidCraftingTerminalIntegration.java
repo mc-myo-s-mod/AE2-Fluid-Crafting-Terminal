@@ -50,11 +50,7 @@ public final class FluidCraftingTerminalIntegration {
 
             var availability = FluidCraftingHelper.checkFluidAvailabilityInClientRepo(
                     ingredient, clientRepo, menu.getPlayer().level());
-            if (availability.available()) {
-                newMissing.remove(slot);
-                newCraftable.remove(slot);
-                changed = true;
-            } else if (availability.craftable() && newMissing.contains(slot)) {
+            if (availability.craftable() && newMissing.contains(slot)) {
                 newMissing.remove(slot);
                 newCraftable.add(slot);
                 changed = true;

@@ -3,10 +3,9 @@ package me.myogoo.ae2fct.mixin;
 import appeng.api.config.Actionable;
 import appeng.api.networking.energy.IEnergySource;
 import appeng.api.stacks.AEFluidKey;
-import appeng.api.stacks.AEItemKey;
 import appeng.api.stacks.AEKey;
 import appeng.api.storage.MEStorage;
-import appeng.api.storage.StorageHelper;
+import me.myogoo.ae2fct.util.FluidStorageTransfer;
 import appeng.helpers.InventoryAction;
 import appeng.menu.AEBaseMenu;
 import appeng.menu.SlotSemantic;
@@ -15,11 +14,8 @@ import appeng.menu.guisync.GuiSync;
 import appeng.menu.me.common.MEStorageMenu;
 import appeng.menu.slot.FakeSlot;
 import me.myogoo.ae2fct.api.IMEStorageMenu;
-import me.myogoo.ae2fct.codec.VirtualFluid;
 import me.myogoo.ae2fct.config.FluidCraftingConfig;
 import me.myogoo.ae2fct.integration.FluidCraftingTerminalIntegration;
-import me.myogoo.ae2fct.init.AE2FCTItems;
-import me.myogoo.ae2fct.util.VirtualFluidStorage;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Inventory;
@@ -28,7 +24,6 @@ import net.minecraft.world.inventory.ClickType;
 import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.fluids.FluidStack;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -59,37 +54,20 @@ public abstract class MEStorageMenuMixin extends AEBaseMenu implements IMEStorag
         super(menuType, id, playerInventory, host);
     }
     @Unique
-    private ItemStack createVirtualFluidItem(AEFluidKey fluidKey, long amount) {
-        ItemStack stack = new ItemStack(AE2FCTItems.VIRTUAL_FLUID_ITEM.get());
-        stack.setCount(1);
-        FluidStack fluidStack = fluidKey.toStack((int) amount);
-        VirtualFluidStorage.set(stack, new VirtualFluid(fluidStack, (int) amount));
-        return stack;
-    }
-
-    @Unique
     private boolean tryExtractFluidAndCarry(MEStorageMenu menu, AEFluidKey fluidKey) {
-        long extracted = StorageHelper.poweredExtraction(this.powerSource, this.storage, fluidKey, FLUID_UNIT,
-                menu.getActionSource());
-        if (extracted == FLUID_UNIT) {
-            menu.setCarried(createVirtualFluidItem(fluidKey, extracted));
-            return true;
+        ItemStack extracted = FluidStorageTransfer.extractToItem(this.storage, this.powerSource,
+                fluidKey, (int) FLUID_UNIT, menu.getActionSource());
+        if (extracted.isEmpty()) {
+            return false;
         }
-        return false;
+        menu.setCarried(extracted);
+        return true;
     }
 
     @Unique
     private void returnVirtualFluidToStorage(ItemStack stack, long amount) {
-        AEItemKey itemKey = AEItemKey.of(stack);
-        if (itemKey == null) {
-            return;
-        }
-
-        long inserted = StorageHelper.poweredInsert(this.powerSource, this.storage, itemKey, amount, this.getActionSource(),
-                Actionable.MODULATE);
-        if (inserted > 0) {
-            stack.shrink((int) inserted);
-        }
+        FluidStorageTransfer.returnToStorage(stack, amount, this.storage, this.powerSource,
+                this.getActionSource(), this.getPlayer().getInventory()::placeItemBackInInventory);
     }
 
     @Inject(method = "handleNetworkInteraction", at = @At("HEAD"), cancellable = true)
@@ -167,9 +145,9 @@ public abstract class MEStorageMenuMixin extends AEBaseMenu implements IMEStorag
         for (int i = 0; i < inventory.getContainerSize(); i++) {
             ItemStack stack = inventory.getItem(i);
             if (isVirtualFluidItem(stack)) {
-                int previousCount = stack.getCount();
+                ItemStack previous = stack.copy();
                 returnVirtualFluidToStorage(stack, stack.getCount());
-                inventoryChanged |= stack.getCount() != previousCount;
+                inventoryChanged |= !ItemStack.matches(previous, stack);
                 if (stack.isEmpty()) {
                     inventory.setItem(i, ItemStack.EMPTY);
                 }
@@ -192,6 +170,7 @@ public abstract class MEStorageMenuMixin extends AEBaseMenu implements IMEStorag
             }
 
             returnVirtualFluidToStorage(stack, stack.getCount());
+            slot.setChanged();
             if (stack.isEmpty()) {
                 slot.setByPlayer(ItemStack.EMPTY);
             }

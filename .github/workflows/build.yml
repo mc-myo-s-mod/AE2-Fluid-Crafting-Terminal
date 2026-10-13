@@ -28,18 +28,35 @@ jobs:
             wrapper: ./gradlew
             project: .
             prefix: ":forge-1-20-1:"
+            et: "false"
+          - module: forge-1-20-1
+            minecraft: 1.20.1
+            java: "17\n21"
+            wrapper: ./gradlew
+            project: .
+            prefix: ":forge-1-20-1:"
+            et: "true"
           - module: neoforge-1-21-1
             minecraft: 1.21.1
             java: "17\n21"
             wrapper: ./gradlew
             project: .
             prefix: ":neoforge-1-21-1:"
+            et: "false"
+          - module: neoforge-1-21-1
+            minecraft: 1.21.1
+            java: "17\n21"
+            wrapper: ./gradlew
+            project: .
+            prefix: ":neoforge-1-21-1:"
+            et: "true"
           - module: neoforge-26-1-2
             minecraft: 26.1.2
             java: "25"
             wrapper: ./neoforge-26-1-2/gradlew
             project: neoforge-26-1-2
             prefix: ""
+            et: "false"
 
     steps:
       - uses: actions/checkout@v6
@@ -55,14 +72,56 @@ jobs:
           WRAPPER: ${{ matrix.wrapper }}
           PROJECT: ${{ matrix.project }}
           PREFIX: ${{ matrix.prefix }}
+          ENABLE_ET: ${{ matrix.et }}
         run: |
+          set -euo pipefail
           chmod +x "$WRAPPER"
           "$WRAPPER" --project-dir "$PROJECT" \
             "${PREFIX}compileJava" "${PREFIX}runData" \
-            "${PREFIX}runGameTestServer" "${PREFIX}build" \
-            -Penable_et=false --build-cache --no-configuration-cache --no-daemon --console=plain
+            "${PREFIX}compileGameTestJava" "${PREFIX}verifyViewerClasspath" "${PREFIX}build" \
+            -Penable_et="$ENABLE_ET" -PitemListMod=jei \
+            --max-workers=2 --build-cache --no-configuration-cache --no-daemon --console=plain
+      - name: Run required FCT GameTests and persistence restart
+        env:
+          WRAPPER: ${{ matrix.wrapper }}
+          PROJECT: ${{ matrix.project }}
+          PREFIX: ${{ matrix.prefix }}
+          MODULE: ${{ matrix.module }}
+          ENABLE_ET: ${{ matrix.et }}
+        run: |
+          set -euo pipefail
+          args=(--project-dir "$PROJECT" "${PREFIX}runGameTestServer"
+                -Penable_et="$ENABLE_ET" -PitemListMod=jei
+                -I "$PWD/gradle/fct-ci.init.gradle"
+                --max-workers=2 --no-configuration-cache --no-daemon --console=plain)
+          # Dump JVM threads and fail if server shutdown stalls.
+          timeout --signal=QUIT --kill-after=30s 5m "$WRAPPER" "${args[@]}" | tee gametest.log
+          case "$MODULE" in
+            forge-1-20-1) expected=16; [[ "$ENABLE_ET" == false ]] || expected=18 ;;
+            neoforge-1-21-1) expected=18 ;;
+            neoforge-26-1-2) expected=11 ;;
+          esac
+          grep -Eq "All $expected required tests passed" gametest.log
+          if [[ "$ENABLE_ET" == true && "$MODULE" == neoforge-1-21-1 ]]; then
+            grep -Fq 'FCT ET preview assertions passed' gametest.log
+          fi
+          for phase in write read; do
+            timeout --signal=QUIT --kill-after=30s 5m "$WRAPPER" "${args[@]}" -PfctPersistence="$phase" | tee "persistence-$phase.log"
+            case "$MODULE" in
+              forge-1-20-1) persisted=1 ;;
+              neoforge-1-21-1) persisted=19 ;;
+              neoforge-26-1-2) persisted=12 ;;
+            esac
+            grep -Eq "All $persisted required tests passed" "persistence-$phase.log"
+          done
+      - name: Diagnose failed server processes
+        if: failure()
+        run: |
+          for pid in $(jps -q); do
+            timeout 15s jcmd "$pid" Thread.print -l || true
+          done
       - uses: actions/upload-artifact@v7
         with:
-          name: AE2FCT-${{ matrix.minecraft }}-build
+          name: AE2FCT-${{ matrix.minecraft }}-et-${{ matrix.et }}-build
           path: ${{ matrix.module }}/build/libs/*.jar
           if-no-files-found: error

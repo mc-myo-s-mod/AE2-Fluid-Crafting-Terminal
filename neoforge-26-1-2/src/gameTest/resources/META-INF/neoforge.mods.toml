@@ -8,6 +8,9 @@ version = "1.0.0"
 displayName = "AE2FCT GameTests"
 description = "Test-only GameTest mod for AE2 Fluid Crafting Terminal."
 
+[[mixins]]
+config = "ae2fct-persistence-test.mixins.json"
+
 [[dependencies.ae2fct_gametest]]
 modId = "ae2fct"
 type = "required"

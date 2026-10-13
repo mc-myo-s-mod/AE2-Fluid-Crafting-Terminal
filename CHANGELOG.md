@@ -2,6 +2,17 @@
 
 Loader-specific release notes live in each module's `CHANGELOG.md`; the release workflow uses the selected module file.
 
+## Unreleased (all supported versions)
+
+### Fixes
+- Do not offer virtual fluid for recipe transfer or missing-ingredient previews when the ingredient rejects the virtual bucket, including NBT/component-sensitive buckets.
+
+## Unreleased (Minecraft 1.20.1)
+
+### Fixes
+- Fixed virtual XP buckets not crafting Mob Grinding Utils chicken feed used to obtain rotten eggs. Fluid tags, bucket amounts, and the recipe blacklist remain enforced.
+- Require exactly 1000 mB for ordinary virtual-bucket ingredients, matching the newer versions.
+
 ## 19.1.2 (Minecraft 1.21.1)
 
 ### Fixes

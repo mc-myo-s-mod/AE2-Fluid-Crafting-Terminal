@@ -27,6 +27,7 @@ import me.myogoo.ae2fct.integration.recipeviewer.VirtualFluidBlacklistRecipe;
 import me.myogoo.extendedterminal.integration.jei.extendedterminal.handler.ETCraftingRecipeTransfer;
 import me.myogoo.extendedterminal.integration.jei.extendedterminal.handler.ETSmithingRecipeTransfer;
 import me.myogoo.extendedterminal.integration.jei.extendedterminal.handler.ETStonecutterRecipeTransfer;
+import mob_grinding_utils.recipe.FluidIngredient;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.core.NonNullList;
@@ -67,6 +68,9 @@ final class Ae2fctClientProbe {
         }
 
         done = true;
+        if (ModList.get().isLoaded("mob_grinding_utils")) {
+            ensureInitialized(FluidIngredient.class);
+        }
         boolean reiLoaded = ModList.get().isLoaded("roughlyenoughitems");
         if (ModList.get().isLoaded("jei") && !reiLoaded) {
             ensureInitialized(UseCraftingRecipeTransfer.class);

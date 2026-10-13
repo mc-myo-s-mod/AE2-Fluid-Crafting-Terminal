@@ -1,6 +1,5 @@
 package me.myogoo.ae2fct.util;
 
-import appeng.api.config.Actionable;
 import appeng.api.networking.crafting.ICraftingService;
 import appeng.api.networking.energy.IEnergySource;
 import appeng.api.networking.security.IActionSource;
@@ -8,7 +7,6 @@ import appeng.api.stacks.AEFluidKey;
 import appeng.api.stacks.AEItemKey;
 import appeng.api.stacks.KeyCounter;
 import appeng.api.storage.MEStorage;
-import appeng.api.storage.StorageHelper;
 import appeng.menu.me.common.IClientRepo;
 import appeng.util.prioritylist.IPartitionList;
 import me.myogoo.ae2fct.codec.VirtualFluid;
@@ -103,6 +101,7 @@ public class FluidCraftingHelper {
                 fluids.add(contained.getFluid());
             }
         }
+        fluids.removeIf(fluid -> !ingredient.test(VirtualFluidItem.createItemStack(fluid)));
         return fluids;
     }
 
@@ -163,6 +162,11 @@ public class FluidCraftingHelper {
 
     public static boolean hasAvailableFluidInClientRepo(Ingredient ingredient, IClientRepo clientRepo,
             Level level, long requiredAmount) {
+        return reserveAvailableFluidInClientRepo(ingredient, clientRepo, level, requiredAmount, null);
+    }
+
+    public static boolean reserveAvailableFluidInClientRepo(Ingredient ingredient, IClientRepo clientRepo,
+            Level level, long requiredAmount, java.util.Map<Object, Integer> reservedAmounts) {
         if (!VirtualFluidRecipePolicy.isPreviewAllowed()) {
             return false;
         }
@@ -181,13 +185,14 @@ public class FluidCraftingHelper {
                 continue;
             }
 
-            if (entry.getStoredAmount() < requiredAmount) {
+            if (entry.getStoredAmount() - (reservedAmounts == null ? 0 : reservedAmounts.getOrDefault(entryFluidKey, 0)) < requiredAmount) {
                 continue;
             }
 
             for (Fluid fluid : fluids) {
                 AEFluidKey fluidKey = AEFluidKey.of(fluid);
                 if (fluidKey != null && entryFluidKey.equals(fluidKey)) {
+                    if (reservedAmounts != null) reservedAmounts.merge(entryFluidKey, Math.toIntExact(requiredAmount), Integer::sum);
                     return true;
                 }
             }
@@ -244,40 +249,29 @@ public class FluidCraftingHelper {
     }
 
     /**
-     * Attempts to resolve fluid from an ingredient's accepted items,
-     * and if enough fluid is available in MEStorage, extracts it
-     * and returns a "simulated bucket" representing the item.
+     * @deprecated Use {@link FluidStorageTransfer#extractToItem} with an exact fluid key.
+     * A partial extraction is returned on the template with its actual amount; callers must inspect it.
      */
+    @Deprecated(forRemoval = true)
     public static ItemStack tryExtractFluidForIngredient(Ingredient ingredient, MEStorage networkStorage,
             IEnergySource energy, IActionSource src, Level level) {
         if (networkStorage == null)
             return ItemStack.EMPTY;
 
         for (ItemStack stack : getStacksFromIngredient(ingredient, level)) {
-            FluidStack requiredFluid = getContainedFluid(stack);
-
-            if (!requiredFluid.isEmpty()) {
-                AEFluidKey fluidKey = AEFluidKey.of(requiredFluid);
-                if (fluidKey != null) {
-                    long simulated = StorageHelper.poweredExtraction(energy, networkStorage, fluidKey,
-                            requiredFluid.getAmount(), src, Actionable.SIMULATE);
-                    if (simulated >= requiredFluid.getAmount()) {
-                        long extracted = StorageHelper.poweredExtraction(energy, networkStorage, fluidKey,
-                                requiredFluid.getAmount(), src, Actionable.MODULATE);
-                        if (extracted >= requiredFluid.getAmount()) {
-                            ItemStack simBucket = stack.copy();
-                            simBucket.setCount(1);
-                            simBucket.set(AE2FCTDataComponent.VIRTUAL_FLUID,
-                                    new VirtualFluid(requiredFluid, requiredFluid.getAmount()));
-                            return simBucket;
-                        }
-                    }
-                }
+            ItemStack extracted = tryExtractFluidForTemplate(stack, networkStorage, energy, src);
+            if (!extracted.isEmpty()) {
+                return extracted;
             }
         }
         return ItemStack.EMPTY;
     }
 
+    /**
+     * @deprecated Use {@link FluidStorageTransfer#extractToItem} with an exact fluid key.
+     * Preserves template data and returns partial fluid rather than discarding an incomplete extraction.
+     */
+    @Deprecated(forRemoval = true)
     public static ItemStack tryExtractFluidForTemplate(ItemStack providedTemplate, MEStorage networkStorage,
             IEnergySource energy, IActionSource src) {
         if (networkStorage == null)
@@ -287,18 +281,15 @@ public class FluidCraftingHelper {
         if (!requiredFluid.isEmpty()) {
             AEFluidKey fluidKey = AEFluidKey.of(requiredFluid);
             if (fluidKey != null) {
-                long simulated = StorageHelper.poweredExtraction(energy, networkStorage, fluidKey,
-                        requiredFluid.getAmount(), src, Actionable.SIMULATE);
-                if (simulated >= requiredFluid.getAmount()) {
-                    long extracted = StorageHelper.poweredExtraction(energy, networkStorage, fluidKey,
-                            requiredFluid.getAmount(), src, Actionable.MODULATE);
-                    if (extracted >= requiredFluid.getAmount()) {
-                        ItemStack simBucket = providedTemplate.copy();
-                        simBucket.setCount(1);
-                        simBucket.set(AE2FCTDataComponent.VIRTUAL_FLUID,
-                                new VirtualFluid(requiredFluid, requiredFluid.getAmount()));
-                        return simBucket;
-                    }
+                ItemStack extracted = FluidStorageTransfer.extractToItem(networkStorage, energy, fluidKey,
+                        requiredFluid.getAmount(), src);
+                if (!extracted.isEmpty()) {
+                    ItemStack simBucket = providedTemplate.copy();
+                    simBucket.setCount(1);
+                    simBucket.set(AE2FCTDataComponent.VIRTUAL_FLUID,
+                            new VirtualFluid(extracted.get(AE2FCTDataComponent.VIRTUAL_FLUID).fluid(),
+                                    requiredFluid.getAmount()));
+                    return simBucket;
                 }
             }
         }

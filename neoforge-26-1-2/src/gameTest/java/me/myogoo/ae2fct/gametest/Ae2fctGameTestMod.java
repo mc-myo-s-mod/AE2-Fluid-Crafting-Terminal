@@ -4,6 +4,7 @@ import appeng.api.stacks.AEFluidKey;
 import appeng.api.stacks.AEItemKey;
 import appeng.api.stacks.AEKey;
 import appeng.api.stacks.KeyCounter;
+import appeng.me.storage.NetworkStorage;
 import appeng.api.config.Actionable;
 import appeng.api.config.PowerMultiplier;
 import appeng.core.definitions.AEItems;
@@ -39,6 +40,7 @@ import me.myogoo.ae2fct.integration.BlacklistRecipe;
 import me.myogoo.ae2fct.integration.FluidCraftingTerminalIntegration;
 import net.minecraft.core.Holder;
 import net.minecraft.core.NonNullList;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.gametest.framework.FunctionGameTestInstance;
 import net.minecraft.gametest.framework.GameTestHelper;
@@ -58,6 +60,7 @@ import net.minecraft.world.inventory.ContainerSynchronizer;
 import net.minecraft.world.inventory.InventoryMenu;
 import net.minecraft.world.inventory.RemoteSlot;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.item.BucketItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.CraftingInput;
@@ -74,6 +77,9 @@ import net.neoforged.fml.ModList;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.neoforge.event.RegisterGameTestsEvent;
 import net.neoforged.neoforge.common.util.FakePlayerFactory;
+import net.neoforged.neoforge.common.crafting.ICustomIngredient;
+import net.neoforged.neoforge.common.crafting.DataComponentIngredient;
+import net.neoforged.neoforge.common.crafting.IngredientType;
 import net.neoforged.neoforge.fluids.FluidType;
 import net.neoforged.neoforge.registries.RegisterEvent;
 import net.neoforged.neoforge.transfer.fluid.FluidResource;
@@ -94,6 +100,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Consumer;
+import java.util.stream.Stream;
 
 @Mod("ae2fct_gametest")
 public final class Ae2fctGameTestMod {
@@ -103,6 +110,13 @@ public final class Ae2fctGameTestMod {
     private static final Identifier BLACKLIST_TEST_ID = Ae2fct.makeId("virtual_fluid_recipe_blacklist_regression");
     private static final Identifier FASTSUITE_TEST_ID = Ae2fct.makeId("virtual_fluid_fastsuite_cache_regression");
     private static final Identifier STRUCTURE = Ae2fct.makeId("empty");
+    private static final Identifier NETWORK_EXTRACT_TEST = Ae2fct.makeId("network_partial_extraction");
+    private static final Identifier NETWORK_INSERT_TEST = Ae2fct.makeId("network_partial_insertion");
+    private static final Identifier LIFECYCLE_TEST = Ae2fct.makeId("persistent_lifecycle");
+    private static final Identifier TOPOLOGY_TEST = Ae2fct.makeId("topology_and_reentrancy");
+    private static final Identifier PART_TEST = Ae2fct.makeId("part_lifecycle");
+    private static final Identifier NETWORK_BOUNDS_TEST = Ae2fct.makeId("network_amount_bounds");
+    private static final Identifier PERSISTENCE_TEST = Ae2fct.makeId("real_chunk_and_restart");
     private static final Identifier BLACKLISTED_RECIPE_ID = Ae2fct.makeId("gametest/blacklisted_virtual_bucket");
     private static final Identifier ALLOWED_TAGGED_RECIPE_ID = Ae2fct.makeId("gametest/allowed_tagged_bucket");
     private static final Identifier BLACKLISTED_OVERLAP_RECIPE_ID = Ae2fct.makeId("gametest/aaa_blacklisted_overlap");
@@ -135,6 +149,18 @@ public final class Ae2fctGameTestMod {
 
     private static void registerTestFunction(RegisterEvent event) {
         if (event.getRegistryKey() == Registries.TEST_FUNCTION) {
+            if (System.getProperty("ae2fct.persistenceSmoke") != null) {
+                event.register(Registries.TEST_FUNCTION, PERSISTENCE_TEST, () -> PersistentWorldGameTest::realChunkAndRestart);
+            }
+            event.register(Registries.TEST_FUNCTION, LIFECYCLE_TEST, () -> FluidTransferRegression::persistentLifecycle);
+            event.register(Registries.TEST_FUNCTION, TOPOLOGY_TEST, () -> FluidTransferRegression::topologyAndReentrancy);
+            event.register(Registries.TEST_FUNCTION, PART_TEST, () -> FluidTransferRegression::partLifecycle);
+            event.register(Registries.TEST_FUNCTION, NETWORK_BOUNDS_TEST,
+                    () -> FluidTransferRegression::networkAmountBounds);
+            event.register(Registries.TEST_FUNCTION, NETWORK_EXTRACT_TEST,
+                    () -> FluidTransferRegression::partialNetworkExtraction);
+            event.register(Registries.TEST_FUNCTION, NETWORK_INSERT_TEST,
+                    () -> FluidTransferRegression::partialNetworkInsertion);
             event.register(Registries.TEST_FUNCTION, OFFHAND_TEST_ID,
                     () -> Ae2fctGameTestMod::virtualFluidOffhandRefundRegression);
             event.register(Registries.TEST_FUNCTION, TEST_ID,
@@ -149,6 +175,14 @@ public final class Ae2fctGameTestMod {
     }
 
     private static void registerGameTests(RegisterGameTestsEvent event) {
+        if (System.getProperty("ae2fct.persistenceSmoke") != null) {
+            event.registerTest(PERSISTENCE_TEST, new FunctionGameTestInstance(ResourceKey.create(Registries.TEST_FUNCTION, PERSISTENCE_TEST),
+                    new TestData<>(ENVIRONMENT, STRUCTURE, 600, 0, true, Rotation.NONE, false, 1, 1, false, 0)));
+        }
+        for (var id : List.of(NETWORK_EXTRACT_TEST, NETWORK_INSERT_TEST, NETWORK_BOUNDS_TEST, LIFECYCLE_TEST, TOPOLOGY_TEST, PART_TEST)) {
+            event.registerTest(id, new FunctionGameTestInstance(ResourceKey.create(Registries.TEST_FUNCTION, id),
+                    new TestData<>(ENVIRONMENT, STRUCTURE, 20, 0, true, Rotation.NONE, false, 1, 1, false, 0)));
+        }
         event.registerTest(OFFHAND_TEST_ID, new FunctionGameTestInstance(OFFHAND_TEST_FUNCTION, new TestData<>(
                 ENVIRONMENT,
                 STRUCTURE,
@@ -219,7 +253,7 @@ public final class Ae2fctGameTestMod {
         try {
             var host = new TestPatternHost(player, helper.getLevel());
             var menu = new CraftingTermMenu(10, player.getInventory(), host);
-            AEItemKey waterKey = AEItemKey.of(VirtualFluidItem.createItemStack(Fluids.WATER));
+            AEFluidKey waterKey = AEFluidKey.of(Fluids.WATER);
             player.containerMenu = menu;
             player.getInventory().setItem(0, VirtualFluidItem.createItemStack(Fluids.WATER));
             player.getInventory().setItem(Inventory.SLOT_OFFHAND, ItemStack.EMPTY);
@@ -234,24 +268,24 @@ public final class Ae2fctGameTestMod {
 
             menu.removed(player);
             assertTrue(helper, player.getOffhandItem().isEmpty(), "returned offhand fluid must be removed");
-            assertEquals(helper, 1L, host.storage.stored(waterKey), "menu close must return exactly one virtual fluid");
+            assertEquals(helper, 1000L, host.storage.stored(waterKey), "menu close must return exactly one virtual fluid");
             player.inventoryMenu.transferState(menu);
             player.inventoryMenu.broadcastChanges();
             assertTrue(helper, client.offhand.isEmpty(), "menu close must clear the client-predicted offhand too");
             menu.removed(player);
-            assertEquals(helper, 1L, host.storage.stored(waterKey), "closing again must not return fluid twice");
+            assertEquals(helper, 1000L, host.storage.stored(waterKey), "closing again must not return fluid twice");
 
             player.getInventory().setItem(Inventory.SLOT_OFFHAND, new ItemStack(Items.STICK, 3));
             menu.removed(player);
             assertEquals(helper, 3, player.getOffhandItem().getCount(), "ordinary offhand items must stay untouched");
-            assertEquals(helper, 1L, host.storage.stored(waterKey), "ordinary offhand items must not enter ME");
+            assertEquals(helper, 1000L, host.storage.stored(waterKey), "ordinary offhand items must not enter ME");
 
             host.storage.acceptInserts = false;
             player.getInventory().setItem(Inventory.SLOT_OFFHAND, VirtualFluidItem.createItemStack(Fluids.WATER));
             menu.removed(player);
             assertTrue(helper, FluidCraftingHelper.isVirtualFluidItem(player.getOffhandItem()),
                     "rejected fluid must remain in the offhand");
-            assertEquals(helper, 1L, host.storage.stored(waterKey), "rejected fluid must not enter ME");
+            assertEquals(helper, 1000L, host.storage.stored(waterKey), "rejected fluid must not enter ME");
         } finally {
             player.initInventoryMenu();
             player.containerMenu = previousMenu;
@@ -262,6 +296,52 @@ public final class Ae2fctGameTestMod {
     }
 
     private static void virtualFluidIngredientRegression(GameTestHelper helper) {
+
+        var waterKey = AEFluidKey.of(Fluids.WATER);
+        var virtualKey = AEItemKey.of(VirtualFluidItem.createItemStack(Fluids.WATER));
+        FluidTransferRegression.run(helper);
+        previewReservations(helper);
+        var source = IActionSource.empty();
+        for (long amount : new long[] { 999, 1000, 3999, 4000 }) {
+            long[] stored = { amount };
+            MEStorage tank = new MEStorage() {
+                @Override
+                public Component getDescription() {
+                    return Component.literal("Whole-bucket test tank");
+                }
+
+                @Override
+                public long extract(AEKey key, long requested, Actionable mode, IActionSource src) {
+                    long moved = key.equals(waterKey) ? Math.min(stored[0], requested) : 0;
+                    if (mode == Actionable.MODULATE) stored[0] -= moved;
+                    return moved;
+                }
+
+                @Override
+                public long insert(AEKey key, long requested, Actionable mode, IActionSource src) {
+                    long moved = key.equals(waterKey) ? Math.min(4000 - stored[0], requested) : 0;
+                    if (mode == Actionable.MODULATE) stored[0] += moved;
+                    return moved;
+                }
+            };
+            var network = PersistentNetworkFixture.network(helper);
+            network.mount(0, tank);
+            long buckets = amount / 1000;
+            assertEquals(helper, buckets, network.extract(virtualKey, 4, Actionable.SIMULATE, source),
+                    "ME simulated bucket extraction at " + amount);
+            assertEquals(helper, amount, stored[0], "ME simulation must not consume fluid");
+            assertEquals(helper, buckets, network.extract(virtualKey, 4, Actionable.MODULATE, source),
+                    "ME actual bucket extraction at " + amount);
+            assertEquals(helper, amount - buckets * 1000, stored[0], "ME extracts only whole bucket amounts");
+
+            stored[0] = 4000 - amount;
+            assertEquals(helper, buckets, network.insert(virtualKey, 4, Actionable.SIMULATE, source),
+                    "ME simulated bucket insertion with room " + amount);
+            assertEquals(helper, 4000 - amount, stored[0], "ME simulation must not insert fluid");
+            assertEquals(helper, buckets, network.insert(virtualKey, 4, Actionable.MODULATE, source),
+                    "ME actual bucket insertion with room " + amount);
+            assertEquals(helper, 4000 - amount + buckets * 1000, stored[0], "ME inserts only whole bucket amounts");
+        }
         FluidCraftingHelper.clearFluidCraftingEnabled();
 
         Ingredient waterBucket = Ingredient.of(Items.WATER_BUCKET);
@@ -293,6 +373,22 @@ public final class Ae2fctGameTestMod {
                     "a 999 mB virtual fluid does not match a full-bucket ingredient");
             assertTrue(helper, !waterBucket.test(lavaVirtual),
                     "lava virtual item does not match water bucket ingredient");
+
+            var custom = new WaterBucketIngredient();
+            Ingredient customBucket = custom.toVanilla();
+            assertTrue(helper, !custom.test(waterVirtual), "custom delegate requires an actual BucketItem");
+            assertTrue(helper, customBucket.test(new ItemStack(Items.WATER_BUCKET)), "custom real bucket control");
+            assertTrue(helper, customBucket.test(waterVirtual), "custom ingredient accepts a full virtual bucket");
+            assertTrue(helper, !customBucket.test(lavaVirtual), "custom ingredient rejects the wrong virtual fluid");
+            assertTrue(helper, !customBucket.test(undersizedWater), "custom ingredient rejects 999 mB");
+
+            var namedBucket = new ItemStack(Items.WATER_BUCKET);
+            namedBucket.set(DataComponents.CUSTOM_NAME, Component.literal("Required bucket"));
+            var namedIngredient = DataComponentIngredient.of(true, namedBucket);
+            assertTrue(helper, namedIngredient.test(namedBucket), "component real bucket control");
+            assertTrue(helper, !namedIngredient.test(waterVirtual), "virtual fluid cannot satisfy bucket components");
+            assertTrue(helper, FluidCraftingHelper.getFluidsFromIngredient(namedIngredient, helper.getLevel()).isEmpty(),
+                    "fluid preview and transfer must reject substitutes with missing components");
 
             var contained = FluidUtil.getFirstStackContained(waterVirtual);
             assertEquals(helper, Fluids.WATER, contained.getFluid(), "virtual fluid item contains water");
@@ -353,6 +449,10 @@ public final class Ae2fctGameTestMod {
                     "blacklisted transfer cannot reuse an existing virtual fluid item");
             assertTrue(helper, Ingredient.of(Items.WATER_BUCKET).test(new ItemStack(Items.WATER_BUCKET)),
                     "blacklisted transfer still accepts real buckets");
+            Ingredient customBucket = new WaterBucketIngredient().toVanilla();
+            assertTrue(helper, !customBucket.test(virtualWater), "blacklist rejects custom virtual bucket");
+            assertTrue(helper, customBucket.test(new ItemStack(Items.WATER_BUCKET)),
+                    "blacklist still accepts custom real bucket");
             FluidCraftingHelper.clearFluidCraftingEnabled();
             assertTransferPreviewFluidRepoPolicy(helper, level, Ingredient.of(Items.WATER_BUCKET));
             assertEquals(helper, null, findCraftingRecipe(level, virtualWater, new ItemStack(Items.STICK)),
@@ -452,7 +552,7 @@ public final class Ae2fctGameTestMod {
         ItemStack carriedWater = VirtualFluidItem.createItemStack(Fluids.WATER);
         ItemStack inventoryWater = VirtualFluidItem.createItemStack(Fluids.WATER);
         ItemStack realSlotWater = VirtualFluidItem.createItemStack(Fluids.WATER);
-        AEItemKey waterKey = AEItemKey.of(ghostWater);
+        AEFluidKey waterKey = AEFluidKey.of(Fluids.WATER);
 
         var fakeSlot = menu.getCraftingGridSlots()[0];
         var realSlot = menu.getSlots(SlotSemantics.BLANK_PATTERN).getFirst();
@@ -474,9 +574,9 @@ public final class Ae2fctGameTestMod {
         assertTrue(helper, menu.getCarried().isEmpty(), "carried virtual fluid must be returned");
         assertTrue(helper, player.getInventory().getItem(0).isEmpty(), "player inventory virtual fluid must be returned");
         assertTrue(helper, realSlot.getItem().isEmpty(), "non-Fake menu slot virtual fluid must be returned");
-        assertEquals(helper, 3L, host.storage.stored(waterKey),
+        assertEquals(helper, 3000L, host.storage.stored(waterKey),
                 "only carried/player/non-Fake virtual fluids should be returned to storage");
-        assertEquals(helper, 4L, host.storage.stored(waterKey) + fakeSlot.getItem().getCount(),
+        assertEquals(helper, 4000L, host.storage.stored(waterKey) + 1000L * fakeSlot.getItem().getCount(),
                 "virtual fluid total must be preserved without duplicating pattern ghosts");
         helper.succeed();
     }
@@ -658,8 +758,8 @@ public final class Ae2fctGameTestMod {
             menu.setClientRepo(storedWater);
             var availableResult = VirtualFluidRecipePolicy.withRecipe(menu, BLACKLISTED_RECIPE,
                     () -> FluidCraftingTerminalIntegration.resolveMissingIngredients(menu, missing, ingredients));
-            assertTrue(helper, availableResult.missingSlots().isEmpty(),
-                    "stored fluid must remove the ET preview missing slot");
+            assertTrue(helper, availableResult.missingSlots().contains(0),
+                    "final correction must not count stock already exhausted by hasIngredient");
 
             menu.setClientRepo(craftableWater);
             var craftableResult = VirtualFluidRecipePolicy.withRecipe(menu, BLACKLISTED_RECIPE,
@@ -723,6 +823,32 @@ public final class Ae2fctGameTestMod {
         menu.encode();
         var encoded = menu.getSlots(SlotSemantics.ENCODED_PATTERN).getFirst().getItem();
         assertTrue(helper, PatternDetailsHelper.isEncodedPattern(encoded) == expectedEncoded, message);
+    }
+
+    private record WaterBucketIngredient() implements ICustomIngredient {
+        @Override
+        public boolean test(ItemStack stack) {
+            if (!(stack.getItem() instanceof BucketItem)) {
+                return false;
+            }
+            var fluid = FluidUtil.getFirstStackContained(stack);
+            return fluid.getFluid() == Fluids.WATER && fluid.getAmount() == FluidType.BUCKET_VOLUME;
+        }
+
+        @Override
+        public Stream<Holder<Item>> items() {
+            return Stream.of(Items.WATER_BUCKET.builtInRegistryHolder());
+        }
+
+        @Override
+        public boolean isSimple() {
+            return false;
+        }
+
+        @Override
+        public IngredientType<?> getType() {
+            throw new UnsupportedOperationException("Test-only ingredient is not serialized");
+        }
     }
 
     private static final class TestPatternHost extends ItemMenuHost<Item>
@@ -871,5 +997,73 @@ public final class Ae2fctGameTestMod {
         public RemoteSlot createSlot() {
             return new RemoteSlot.Synchronized(hashGenerator);
         }
+    }
+
+    private static void previewReservations(GameTestHelper helper) {
+        var player = FakePlayerFactory.getMinecraft(helper.getLevel());
+        var saved = new ArrayList<ItemStack>();
+        for (int i = 0; i < player.getInventory().getContainerSize(); i++) {
+            saved.add(player.getInventory().getItem(i).copy());
+            player.getInventory().setItem(i, ItemStack.EMPTY);
+        }
+        boolean oldQol = FluidCraftingConfig.COMMON.QoL.get();
+        var oldBlacklist = FluidCraftingConfig.COMMON.virtualFluidRecipeBlacklist.get();
+        try {
+            FluidCraftingConfig.COMMON.QoL.set(true);
+            FluidCraftingConfig.COMMON.virtualFluidRecipeBlacklist.set(List.of());
+            var menu = new CraftingTermMenu(14, player.getInventory(), new TestPatternHost(player, helper.getLevel()));
+            assertTrue(helper, VirtualFluidRecipePolicy.withRecipe(menu, ALLOWED_TAGGED_RECIPE,
+                            () -> FluidCraftingHelper.hasAvailableFluidInClientRepo(Ingredient.of(Items.WATER_BUCKET),
+                                    previewRepo(Long.MAX_VALUE, false), helper.getLevel(), Long.MAX_VALUE)),
+                    "legacy availability query must preserve long amounts without integer reservation narrowing");
+            var ingredients = new java.util.LinkedHashMap<Integer, Ingredient>();
+            ingredients.put(0, Ingredient.of(Items.WATER_BUCKET, Items.LAVA_BUCKET));
+            ingredients.put(1, Ingredient.of(Items.WATER_BUCKET));
+            for (long amount : new long[]{1000, 2000}) {
+                menu.setClientRepo(previewRepo(amount, false));
+                var result = VirtualFluidRecipePolicy.withRecipe(menu, ALLOWED_TAGGED_RECIPE,
+                        () -> menu.findMissingIngredients(ingredients));
+                assertEquals(helper, amount == 1000 ? 1 : 0, result.missingSlots().size(),
+                        "different ingredients sharing water must reserve it only once");
+                assertTrue(helper, result.craftableSlots().isEmpty(), "stored-only fluid is not craftable");
+                var again = VirtualFluidRecipePolicy.withRecipe(menu, ALLOWED_TAGGED_RECIPE,
+                        () -> menu.findMissingIngredients(ingredients));
+                assertEquals(helper, result.missingSlots().size(), again.missingSlots().size(),
+                        "reservations must reset for each preview");
+            }
+            menu.setClientRepo(previewRepo(1000, true));
+            var craftable = VirtualFluidRecipePolicy.withRecipe(menu, ALLOWED_TAGGED_RECIPE,
+                    () -> menu.findMissingIngredients(ingredients));
+            assertTrue(helper, craftable.missingSlots().isEmpty() && craftable.craftableSlots().size() == 1,
+                    "the exhausted second slot must remain craftable rather than available");
+            menu.setClientRepo(previewRepo(1000, false));
+            player.getInventory().setItem(0, new ItemStack(Items.WATER_BUCKET));
+            var mixed = VirtualFluidRecipePolicy.withRecipe(menu, ALLOWED_TAGGED_RECIPE,
+                    () -> menu.findMissingIngredients(ingredients));
+            assertTrue(helper, !mixed.anyMissingOrCraftable(), "a real bucket must not reserve network fluid");
+        } finally {
+            FluidCraftingConfig.COMMON.QoL.set(oldQol);
+            FluidCraftingConfig.COMMON.virtualFluidRecipeBlacklist.set(oldBlacklist);
+            for (int i = 0; i < saved.size(); i++) player.getInventory().setItem(i, saved.get(i));
+        }
+    }
+
+    private static appeng.menu.me.common.IClientRepo previewRepo(long amount, boolean craftable) {
+        return new appeng.menu.me.common.IClientRepo() {
+            @Override
+            public void handleUpdate(boolean fullUpdate, List<appeng.menu.me.common.GridInventoryEntry> entries) {
+            }
+
+            @Override
+            public java.util.Set<appeng.menu.me.common.GridInventoryEntry> getAllEntries() {
+                return java.util.Set.of(new appeng.menu.me.common.GridInventoryEntry(1, AEFluidKey.of(Fluids.WATER),
+                        amount, 0, craftable));
+            }
+
+            @Override
+            public java.util.Collection<appeng.menu.me.common.GridInventoryEntry> getByIngredient(Ingredient ingredient) {
+                return List.of();
+            }
+        };
     }
 }
