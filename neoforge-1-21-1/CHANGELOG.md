@@ -1,9 +1,15 @@
 # Changelog
 
-## Unreleased (Minecraft 1.21.1)
+## 19.1.3 (Minecraft 1.21.1)
 
 ### Fixes
-- Do not offer virtual fluid for recipe transfer or missing-ingredient previews when the ingredient rejects the virtual bucket, including component-sensitive buckets.
+- Fixed virtual-fluid recipe and usage lookup with newer JEI versions.
+- Preserve partial virtual-fluid amounts across network transfers and world reloads, and recover them when their storage host is removed.
+- Respect ingredient checks when showing virtual-fluid recipe-transfer and missing-ingredient previews.
+
+### Dependencies
+- Requires JEI `19.64.0.455` or newer when installed.
+- Requires NeoForge `21.1.238` or newer.
 
 ## 19.1.2 (Minecraft 1.21.1)
 

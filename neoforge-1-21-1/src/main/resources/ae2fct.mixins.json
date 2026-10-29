@@ -34,7 +34,7 @@
     "itemlists.ETRecipeTransferPreviewMixin",
     "emi.EmiApiAccessor",
     "emi.EmiScreenManagerMixin",
-    "jei.FocusInputHandlerMixin",
+    "jei.IngredientCommandsMixin",
     "jei.et.ETJeiRecipeTransferMixin",
     "rei.EntryWidgetMixin",
     "rei.ScreenOverlayImplMixin"
