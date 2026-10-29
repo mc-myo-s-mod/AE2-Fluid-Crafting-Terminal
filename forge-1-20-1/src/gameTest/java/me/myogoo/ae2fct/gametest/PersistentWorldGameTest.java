@@ -83,7 +83,12 @@ public final class PersistentWorldGameTest {
                         "restarted balance must be recoverable exactly once");
                 level.setBlockAndUpdate(POS, Blocks.AIR.defaultBlockState());
             }
+            // Finish unloading while the GameTest server is still ticking normally.
+            previous[0] = cell;
             level.setChunkForced(POS.getX() >> 4, POS.getZ() >> 4, false);
+        }).thenWaitUntil(() -> helper.assertTrue(previous[0].isRemoved() &&
+                level.getChunkSource().getChunkNow(POS.getX() >> 4, POS.getZ() >> 4) == null,
+                "fixture chunk must unload before server shutdown")).thenExecute(() -> {
             LoggerFactory.getLogger(PersistentWorldGameTest.class).info("FCT_PERSISTENCE_PASS phase={}", write ? "write" : "read");
         }).thenSucceed();
     }

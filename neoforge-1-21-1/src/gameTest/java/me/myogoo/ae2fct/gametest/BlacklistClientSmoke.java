@@ -34,7 +34,7 @@ import me.myogoo.extendedterminal.integration.itemList.jei.avaritiaRe.handler.AV
 import me.myogoo.extendedterminal.integration.itemList.jei.avaritiaNeo.handler.AVNeoJeiRecipeTransferHandler;
 import me.shedaniel.rei.impl.client.gui.ScreenOverlayImpl;
 import me.shedaniel.rei.impl.client.gui.widget.EntryWidget;
-import mezz.jei.gui.input.handlers.FocusInputHandler;
+import mezz.jei.gui.input.handlers.IngredientCommands;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.fluids.FluidStack;
@@ -74,8 +74,11 @@ public final class BlacklistClientSmoke {
                 EmiLookupProbe.run();
             }
             if (ModList.get().isLoaded("jei")) {
-                ensureInitialized(FocusInputHandler.class);
+                ensureInitialized(IngredientCommands.class);
                 ensureInitialized(AE2FCTJeiPlugin.class);
+                if (!ModList.get().isLoaded("emi")) {
+                    JeiLookupProbe.run();
+                }
                 if (ModList.get().isLoaded("extendedterminal") && !ModList.get().isLoaded("emi")) {
                     ensureInitialized(ETCraftingRecipeTransfer.class);
                     ensureInitialized(ETSmithingRecipeTransfer.class);
