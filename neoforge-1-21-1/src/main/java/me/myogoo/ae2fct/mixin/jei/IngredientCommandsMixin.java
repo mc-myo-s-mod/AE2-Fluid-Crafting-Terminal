@@ -1,6 +1,7 @@
 package me.myogoo.ae2fct.mixin.jei;
 
 import appeng.api.stacks.AEFluidKey;
+import appeng.api.stacks.GenericStack;
 import appeng.client.gui.AEBaseScreen;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
@@ -68,9 +69,21 @@ public abstract class IngredientCommandsMixin {
         if (Minecraft.getInstance().screen instanceof AEBaseScreen<?> aeScreen) {
             var stackWithBounds = aeScreen.getStackUnderMouse(input.getMouseX(), input.getMouseY());
             if (stackWithBounds != null && stackWithBounds.stack().what() instanceof AEFluidKey fluidKey
-                    && selected.map(ingredient -> ingredient.isMouseOver(input.getMouseX(), input.getMouseY())
-                            && ingredient.getTypedIngredient().getIngredient() instanceof FluidStack fluid
-                            && fluidKey.equals(AEFluidKey.of(fluid))).orElse(true)) {
+                    && selected.map(ingredient -> {
+                        if (!ingredient.isMouseOver(input.getMouseX(), input.getMouseY())) {
+                            return false;
+                        }
+                        Object value = ingredient.getTypedIngredient().getIngredient();
+                        if (value instanceof FluidStack fluid) {
+                            return fluidKey.equals(AEFluidKey.of(fluid));
+                        }
+                        if (value instanceof ItemStack item) {
+                            // AE2 repository slots expose fluids as WrappedGenericStack items to JEI.
+                            var wrapped = GenericStack.unwrapItemStack(item);
+                            return wrapped != null && fluidKey.equals(wrapped.what());
+                        }
+                        return false;
+                    }).orElse(true)) {
                 if (!input.isKeyboardInput()
                         || !FluidCraftingConfig.showBucketRecipesForAe2FluidKeys()) {
                     return Optional.empty();
