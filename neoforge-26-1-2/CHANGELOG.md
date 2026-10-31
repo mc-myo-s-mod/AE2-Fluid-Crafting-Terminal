@@ -1,9 +1,14 @@
 # Changelog
 
-## Unreleased (Minecraft 26.1.2)
+## 26.0.1 (Minecraft 26.1.2)
 
 ### Fixes
+- Restore virtual-fluid recipe and usage lookup with JEI's modern ingredient commands, including filled-bucket recipes and fuel uses.
+- Preserve keyboard-only fluid lookup, JEI ingredient selection and visibility checks, and the original lookup when no replacement focus is available.
 - Do not offer virtual fluid for recipe transfer or missing-ingredient previews when the ingredient rejects the virtual bucket, including component-sensitive buckets.
+
+### Dependencies
+- Require JEI `29.46.0.108` or newer, the first 26.1.2 release with the modern ingredient command input flow.
 
 ## 26.0.0 (Minecraft 26.1.2)
 

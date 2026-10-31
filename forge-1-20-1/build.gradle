@@ -221,7 +221,8 @@ tasks.named('processResources', ProcessResources).configure {
             mod_version            : mod_version,
             mod_authors            : mod_authors,
             mod_description        : mod_description,
-            Myotus_version         : Myotus_version
+            Myotus_version         : Myotus_version,
+            JEI_min_version        : JEI_min_version
     ]
 
     inputs.properties replaceProperties

@@ -36,7 +36,7 @@
     "emi.EmiScreenManagerMixin",
     "jeirei.EncodingHelperMixin",
     "jei.UseCraftingRecipeTransferMixin",
-    "jei.JeiFocusInputHandlerMixin",
+    "jei.IngredientCommandsMixin",
     "rei.ReiUseCraftingRecipeTransferMixin",
     "rei.ScreenOverlayImplMixin",
     "rei.EntryWidgetMixin",
