@@ -73,6 +73,9 @@ final class Ae2fctClientProbe {
         }
         boolean reiLoaded = ModList.get().isLoaded("roughlyenoughitems");
         if (ModList.get().isLoaded("jei") && !reiLoaded) {
+            if (!ModList.get().isLoaded("emi")) {
+                JeiLookupProbe.run();
+            }
             ensureInitialized(UseCraftingRecipeTransfer.class);
             if (ModList.get().isLoaded("extendedterminal")) {
                 ensureInitialized(ETCraftingRecipeTransfer.class);

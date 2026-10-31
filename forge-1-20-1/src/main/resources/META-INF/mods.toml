@@ -36,3 +36,10 @@ mandatory = true
 versionRange = "[${Myotus_version},)"
 ordering = "AFTER"
 side = "BOTH"
+
+[[dependencies."${mod_id}"]]
+modId = "jei"
+mandatory = false
+versionRange = "[${JEI_min_version},)"
+ordering = "AFTER"
+side = "CLIENT"

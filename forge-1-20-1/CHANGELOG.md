@@ -1,11 +1,15 @@
 # Changelog
 
-## Unreleased (Minecraft 1.20.1)
+## 15.1.1 (Minecraft 1.20.1)
 
 ### Fixes
+- Fixed virtual-fluid recipe/usage shortcuts and AE2 fluid-key bucket lookup with modern JEI input handling, preserving recipe-viewer settings and native lookup fallback.
 - Fixed virtual XP buckets not crafting Mob Grinding Utils chicken feed used to obtain rotten eggs. Fluid tags, bucket amounts, and the recipe blacklist remain enforced.
 - Require exactly 1000 mB for ordinary virtual-bucket ingredients.
 - Do not offer virtual fluid for recipe transfer or missing-ingredient previews when the ingredient rejects the virtual bucket, including NBT-sensitive buckets.
+
+### Compatibility
+- JEI remains optional; when installed, version `15.71.0.223` or newer is required. This is the first modern Forge JEI build with the input-interface reobfuscation fix; `.221` and `.222` crash during GUI input handling.
 
 ## 15.1.0 (Minecraft 1.20.1)
 
