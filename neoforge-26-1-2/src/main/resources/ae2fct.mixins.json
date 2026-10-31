@@ -30,7 +30,7 @@
     "minecraft.AbstractContainerMenuMixin"
   ],
   "client": [
-    "jei.FocusInputHandlerMixin",
+    "jei.IngredientCommandsMixin",
     "jei.RecipeTransferPolicyMixin",
     "jei.et.ETJeiRecipeTransferMixin",
     "EncodingHelperMixin",
